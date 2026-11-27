@@ -2836,6 +2836,57 @@ window.att=function(){
  return h};
 })();
 
+/* =====================================================================
+   v22) تنبيهات الموبايل من السيرفر (تجربة) — زرار تفعيل + إرسال تنبيه تجربة
+   ===================================================================== */
+(function(){
+const PW='https://apex-push-pilot.goo2182009.workers.dev';
+const u8=b=>{const s=(b+'='.repeat((4-b.length%4)%4)).replace(/-/g,'+').replace(/_/g,'/'),r=atob(s),a=new Uint8Array(r.length);for(let i=0;i<r.length;i++)a[i]=r.charCodeAt(i);return a};
+const sup=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window&&location.protocol==='https:';
+const ios=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const stand=()=>matchMedia('(display-mode: standalone)').matches||!!navigator.standalone;
+const fl=()=>{try{return localStorage.getItem('apexpush')==='1'}catch(e){return false}};
+const setFl=v=>{try{v?localStorage.setItem('apexpush','1'):localStorage.removeItem('apexpush')}catch(e){}};
+const getSub=async()=>{try{const r=await navigator.serviceWorker.getRegistration();return r?await r.pushManager.getSubscription():null}catch(e){return null}};
+window.pushCard=function(){
+ let body,btn='';
+ if(!sup())body='<div class="note warn">المتصفح ده مش بيدعم تنبيهات السيرفر. جرّب كروم على الأندرويد، أو افتح البرنامج من أيقونته على الشاشة الرئيسية.</div>';
+ else if(ios&&!stand())body='<div class="note warn">على الآيفون لازم تضيف البرنامج للشاشة الرئيسية الأول (مشاركة ← إضافة إلى الشاشة الرئيسية) وتفتحه من الأيقونة، وبعدين ارجع هنا وفعّل.</div>';
+ else if(Notification.permission==='denied')body='<div class="note warn">التنبيهات متقفلة للبرنامج من إعدادات الموبايل أو المتصفح. افتحها من هناك وارجع جرّب تاني.</div>';
+ else if(fl()){body='<div class="note okk">✅ التنبيهات مفعّلة على الجهاز ده. التنبيه عام وبيقولك تفتح البرنامج، ومفيهوش أي بيانات طلاب.</div>';
+  btn='<div class=ng style="margin-top:10px"><button type=button onclick="pushTest()">📨 ابعتلي تنبيه تجربة</button><button type=button class=g onclick="pushOff()">إيقاف</button></div>'}
+ else{body='<p class=mut style="margin:0 0 10px">تجربة: تنبيهات بتوصل موبايلك من السيرفر حتى لو البرنامج مقفول. النص عام ومفيهوش أي أسماء أو بيانات. المواعيد دلوقتي وهمية للتجربة بس.</p>';
+  btn='<button type=button onclick="pushOn()" style="width:100%">🔔 فعّل التنبيهات</button>'}
+ return `<div class=card id=pushc><h3 class=hd>📡 تنبيهات من السيرفر <small class=mut>تجربة</small></h3>${body}${btn}<div id=pushm class=mut style="margin-top:8px;min-height:18px"></div></div>`};
+const msg=t=>{const e=document.getElementById('pushm');if(e)e.textContent=t};
+window.pushOn=async function(){
+ try{
+  msg('⏳ جاري التفعيل...');
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){msg('لازم توافق على الإذن عشان التنبيهات تشتغل.');return}
+  const reg=await navigator.serviceWorker.ready;
+  const key=await (await fetch(PW+'/vapid')).text();
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key.trim())});
+  const r=await fetch(PW+'/subscribe',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:sub.endpoint})});
+  if(!r.ok)throw new Error('server '+r.status);
+  setFl(true);toast('✅ اتفعّلت التنبيهات');rerender()
+ }catch(e){msg('معرفتش أفعّل: '+(e&&e.message||e)+' — جرّب تاني بعد شوية.')}};
+window.pushTest=async function(){
+ try{const s=await getSub();if(!s){msg('مفيش تفعيل على الجهاز ده، فعّل الأول.');setFl(false);rerender();return}
+  msg('⏳ بيتبعت...');
+  const r=await fetch(PW+'/test-me',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({endpoint:s.endpoint})});
+  msg(r.ok?'📨 اتبعت. المفروض يظهر تنبيه خلال ثواني.':r.status===429?'استنى دقيقة وجرّب تاني.':'السيرفر رفض ('+r.status+').')
+ }catch(e){msg('حصلت مشكلة في الإرسال، جرّب تاني.')}};
+window.pushOff=async function(){
+ try{const s=await getSub();if(s)await s.unsubscribe()}catch(e){}
+ setFl(false);toast('تم إيقاف التنبيهات');rerender()};
+function rerender(){const c=document.getElementById('pushc');if(c){const t=document.createElement('div');t.innerHTML=pushCard();c.replaceWith(t.firstElementChild)}}
+async function sync(){if(!sup())return;const s=await getSub();const want=!!s&&Notification.permission==='granted';if(want!==fl()){setFl(want);rerender()}}
+const _t22=window.tools;
+window.tools=function(){const h=_t22();setTimeout(()=>{try{sync()}catch(e){}},50);return h+pushCard()};
+})();
+
 window.__ns={nsUrgent,nsCheck,nsSummaryObj,nsGet,nsSet,nsSyncSW};
 
 })();

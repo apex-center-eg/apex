@@ -1175,7 +1175,7 @@ function lev(a,b,mx){if(a===b)return 0;const la=a.length,lb=b.length;if(Math.abs
   for(let i=1;i<=la;i++){const c=[i];let mn=i;for(let j=1;j<=lb;j++){const v=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));c[j]=v;if(v<mn)mn=v}if(mn>mx)return mx+1;p=c}return p[lb]}
 const tol=w=>w.length>=7?2:w.length>=4?1:0;
 const near=(a,b)=>a===b||(a.length>=3&&b.startsWith(a))||lev(a,b,tol(a))<=tol(a);
-const KW0={abs:'غياب غايب غاب غائب غائبين غيابات',late:'تاخر تاخير متاخر متاخرين تاخرو',fail:'راسب راسبين راسبه رسب رسوب ضعيف ضعاف اضعف',commit:'ملتزم ملتزمين التزام منتظم منتظمين مواظب مواظبين',sum:'ملخص لخص تلخيص خلاصه',perf:'اداء مستوي متوسط معدل نتيجه نتايج درجات',hw:'واجب واجبات',imp:'اتحسن تحسن تحسنو تقدم تطور',fu:'متابعه تنبيه تنبيهات انذار انذارات محتاج يحتاج خطر',top:'متفوق متفوقين اوائل افضل احسن اشطر',last:'اخر اخيره اخير امس',ses:'حصه حصص محاضره درس'};
+const KW0={abs:'غياب غايب غاب غائب غائبين غيابات ماحضرش ماحضروش ماجاش ماجوش مجاش',hwx:'مقصر مقصرين مقصره مقصرات مسلمش مسلموش متسلمش مسلمتش ماعملش ماعملوش معملش معملوش ناقص',late:'تاخر تاخير متاخر متاخرين تاخرو',fail:'راسب راسبين راسبه رسب رسوب ضعيف ضعاف اضعف',commit:'ملتزم ملتزمين التزام منتظم منتظمين مواظب مواظبين',sum:'ملخص لخص تلخيص خلاصه',perf:'اداء مستوي متوسط معدل نتيجه نتايج درجات',hw:'واجب واجبات',imp:'اتحسن تحسن تحسنو تقدم تطور',fu:'متابعه تنبيه تنبيهات انذار انذارات محتاج يحتاج خطر',top:'متفوق متفوقين اوائل افضل احسن اشطر',last:'اخر اخيره اخير امس النهارده انهارده اليوم دلوقتي',ses:'حصه حصص محاضره درس'};
 const KW={};Object.keys(KW0).forEach(k=>KW[k]=KW0[k].split(' ').map(NN));
 const STOP=/^(في|من|مين|علي|الي|عن|هو|هي|كل|ده|دي|اللي|الذين|الذي|كام|ايه|ما|هل|لو|ممكن|عايز|عاوز|اريد|لي|لنا|بتاع|بتاعه|عرض|اعرض|اظهر|وريني|هات|الطلاب|طلاب|الطالب|طالب|مجموعه|مجموعات|اعلي|اكتر|اكثر|اقل|الاكثر|الاقل|بين|مع|او|و)$/;
 const MORE=/^(اعلي|اكتر|اكثر|الاكثر)$/;
@@ -1204,7 +1204,7 @@ function smart(q){
     if(/^\d{1,2}$/.test(t)){n=Math.max(1,+t);return}if(NUMW[t]){n=NUMW[t];return}
     const tt=t.replace(/^(وال|بال|لل|ال)/,'');
     if(gw.has(t)||gw.has(tt))return;
-    if(STOP.test(t)||STOP.test(tt)){if(MORE.test(t))f.more=1;if(/^(اقل|الاقل)$/.test(t))f.less=1;return}
+    if((STOP.test(t)||STOP.test(tt))&&!nameW.has(t)){if(MORE.test(t))f.more=1;if(/^(اقل|الاقل)$/.test(t))f.less=1;return}
     let hit=false;const exact=Object.keys(KW).some(k=>KW[k].includes(t)||KW[k].includes(tt));
     if(exact||!nameW.has(t)){for(const k in KW){if(KW[k].some(w=>w===t||w===tt||(tt.length>=3&&near(tt,w)))){f[k]=1;hit=true}}}
     if(!hit)rest.push(t)});
@@ -1213,14 +1213,21 @@ function smart(q){
   const pool=(rest.length&&nm.length&&Object.keys(f).filter(k=>k!=='more'&&k!=='less').length)?nm:pool0;
   const add=(arr,note)=>arr.forEach(s=>R.st.push({s,note:note?note(s):null}));
   const intents=Object.keys(f).filter(k=>!['more','less','ses','last','top'].includes(k)||k==='top');
-  if(f.sum){
+  if(f.hwx){
+    const hs=(r,id)=>{const i=(r.hwi||{})[id],h=(r.hws||{})[id];if(i){if(i.book&&i.eval)return '';return !i.book&&!i.eval?'ماعملش الواجب':!i.book?'ماعملش واجب الكتاب':'ماعملش واجب التقييمات'}return h==='n'?'ماعملش الواجب':h==='m'?'واجبه ناقص':''};
+    const gids=g?[g.id]:gs().map(x=>x.id),ids=new Set(pool0.map(s=>s.id));let cnt=0,dts=new Set();
+    gids.forEach(gid=>{const k=lastK(gid)[0];if(!k)return;const r=db.att[k];dts.add(fd(r.d));
+      pool0.filter(s=>s.gid===gid&&(r.rec[s.id]==='p'||r.rec[s.id]==='l')).forEach(s=>{const w=hs(r,s.id);if(w){cnt++;R.st.push({s,note:w+' · حصة '+fd(r.d)+' · '+gname(gid)})}})});
+    if(rest.length&&nm.length)R.st=R.st.filter(x=>nm.includes(x.s));
+    R.t='📚 المقصرون في الواجب (آخر حصة'+(g?' — '+g.name:' لكل مجموعة')+')';if(!R.st.length)R.info='ماحدش مقصّر في واجب آخر حصة ✅'}
+  else if(f.sum){
     const ks=lastK(g&&g.id);let k=ks[0];
     if(!g&&rest.length){const m=db.sessions.filter(x=>x.k&&db.att[x.k]&&rest.every(t=>NN([x.topic,x.note,x.hw].join(' ')).split(' ').some(w=>w.includes(t)||near(t,w)))).map(x=>x.k).sort((a,b)=>(db.att[b].d||'').localeCompare(db.att[a].d||''));if(m.length){R.se=m.slice(0,6);R.t='📖 حصص مطابقة'}}
     if(!R.se.length){if(!k){R.t='ملخص الحصة';R.info='لا توجد حصص مسجّلة'+(g?' لهذه المجموعة':'')+' بعد.'}else{R.se=ks.slice(0,3);R.t='📋 ملخص '+(f.last||!g?'آخر حصة':'الحصص الأخيرة')+(g?' — '+g.name:'')}}
     if(g)R.gr=[g];
   }else if(f.hw){const ks=lastK(g&&g.id).filter(k=>{const se=db.sessions.find(x=>x.k===k);return se&&se.hw&&se.hw.trim()}).slice(0,5);R.se=ks;R.t='📝 الواجبات المطلوبة'+(g?' — '+g.name:'');if(!ks.length)R.info='لا توجد واجبات مسجّلة.'}
   else if(f.abs&&(f.last||f.ses)){const k=lastK(g&&g.id)[0];if(k){const r=db.att[k];add(pool.filter(s=>r.rec[s.id]==='a'),()=>'غائب بتاريخ '+fd(r.d));R.se=[k];R.t='❌ الغائبون في آخر حصة'+(g?' — '+g.name:'')+' ('+fd(r.d)+')'}else R.t='❌ غياب آخر حصة'}
-  else if(f.abs){const l=pool.map(s=>({s,n:absences(s.id).length})).filter(x=>x.n).sort((a,b)=>f.less?a.n-b.n:b.n-a.n).slice(0,n);add(l.map(x=>x.s),s=>'غاب '+absences(s.id).length+' يوم · '+stC2(s));R.t=(f.less?'أقل ':'أكثر ')+n+' طلاب غياباً'+(g?' — '+g.name:'')}
+  else if(f.abs){let l=pool.map(s=>({s,n:absences(s.id).length})).filter(x=>x.n).sort((a,b)=>f.less?a.n-b.n:b.n-a.n).slice(0,n);if(!l.length&&rest.length&&nm.length)l=nm.slice(0,n).map(s=>({s,n:0}));add(l.map(x=>x.s),s=>'غاب '+absences(s.id).length+' يوم · '+stC2(s));R.t=(f.less?'أقل ':'أكثر ')+n+' طلاب غياباً'+(g?' — '+g.name:'')}
   else if(f.late){const l=pool.map(s=>({s,n:stt(s).l})).filter(x=>x.n>=1).sort((a,b)=>b.n-a.n).slice(0,n);add(l.map(x=>x.s),s=>'تأخر '+stt(s).l+' مرة · '+gname(s.gid));R.t='⏰ المتأخرون'+(g?' — '+g.name:'')}
   else if(f.fail){add([],s=>'');R.t='📉 الدرجة المنخفضة لا تُعتبر تقصيرًا — لا توجد قائمة'+(g?' — '+g.name:'')}
   else if(f.commit){const l=pool.map(s=>({s,r:rateOf(s),t:(()=>{const c=stt(s);return c.p+c.l+c.a})()})).filter(x=>x.r!=null&&x.t>=2&&x.r>=90).sort((a,b)=>b.r-a.r||b.t-a.t).slice(0,Math.max(n,15));add(l.map(x=>x.s),s=>'التزام '+attP([s])+' حصة · '+gname(s.gid));R.t='✅ الملتزمون بالحضور (حضور شبه كامل)'+(g?' — '+g.name:'')}
@@ -1276,11 +1283,14 @@ function drawR(){const b=$('#aib'),tb=$('#ait');if(!b||!_R)return;const R=_R,C={
   b.innerHTML=h}
 function drawEmpty(){const b=$('#aib'),tb=$('#ait');if(!b)return;tb.innerHTML='';_R=null;const g=gs()[0],p=pend().length,urg=nots().filter(n=>!n.done&&n.pr===0).length;
   const qs=AIQ.slice();if(g){qs.push('أداء '+g.name,'ملخص حصة '+g.name)}
-  b.innerHTML=`<div class=mut style="text-align:center;padding:6px 0 4px">اكتب اسم طالب أو رقم أو اسأل بأي صيغة — والأخطاء الإملائية مفهومة.</div>`+(p?`<button class="g" style="width:100%;border-color:var(--red);margin:6px 0" onclick="aiQ('محتاج متابعة')">🔔 ${p} حالة تحتاج متابعة${urg?' ('+urg+' عاجلة)':''}</button>`:'')+`<div class=aiq-chips>${qs.map(x=>`<button class=g onclick="aiQ(this.textContent)">${esc(x)}</button>`).join('')}</div>`}
-window.AIQ=['عرض الطلاب الأكثر غياباً','الملتزمين بالحضور','ملخص آخر حصة','أداء المجموعات','مين غاب آخر حصة؟','الطلاب المتفوقين','المتأخرين بشكل متكرر'];
+  b.innerHTML=`<div class=mut style="text-align:center;padding:6px 0 4px">اكتب اسم طالب أو رقم أو اسأل بأي صيغة — والأخطاء الإملائية مفهومة.</div>`+(p?`<button class="g" style="width:100%;border-color:var(--red);margin:6px 0" onclick="aiQ('محتاج متابعة')">🔔 ${p} حالة تحتاج متابعة${urg?' ('+urg+' عاجلة)':''}</button>`:'')+`<div class=aiq-chips>${qs.map(x=>`<button class=g onclick="aiQ(this.textContent)">${esc(x)}</button>`).join('')}</div>`+(rcGet().length?`<h4 class=sec style="margin-top:12px">🕘 آخر عمليات البحث <button class=g style="padding:3px 10px;font-size:12px;margin-inline-start:8px" onclick="rcClear()">مسح</button></h4><div class=aiq-chips>${rcGet().map(x=>`<button class=g onclick="aiQ(this.textContent)">${esc(x)}</button>`).join('')}</div>`:'')}
+window.AIQ=['المقصرين في الواجب','عرض الطلاب الأكثر غياباً','الملتزمين بالحضور','ملخص آخر حصة','أداء المجموعات','مين غاب آخر حصة؟','الطلاب المتفوقين','المتأخرين بشكل متكرر'];
+const rcGet=()=>{try{return JSON.parse(localStorage.getItem('crecent')||'[]')||[]}catch(e){return[]}};
+window.rcClear=()=>{try{localStorage.removeItem('crecent')}catch(e){}drawEmpty()};
+let rcT=0;const rcAdd=q=>{clearTimeout(rcT);rcT=setTimeout(()=>{if(!q||q.length<2||!_R||!(_R.st.length+_R.gr.length+_R.se.length+_R.al.length))return;try{const l=rcGet().filter(x=>x!==q);l.unshift(q);localStorage.setItem('crecent',JSON.stringify(l.slice(0,8)))}catch(e){}},1200)};
 window.aiRun=function(q){const b=$('#aib');if(!b)return;q=(q||'').trim();aiTab='all';AIL=q;if(!q){drawEmpty();return}
   if(!db.students.length){$('#ait').innerHTML='';b.innerHTML='<div class=empty>لسه مفيش طلاب. ابدأ بإضافة مجموعة وطلاب.</div>';return}
-  try{_R=smart(q)}catch(e){console.error(e);_R={t:'',st:[],gr:[],se:[],al:[],info:'حصلت مشكلة، جرّب صياغة تانية.'}}drawR()};
+  try{_R=smart(q)}catch(e){console.error(e);_R={t:'',st:[],gr:[],se:[],al:[],info:'حصلت مشكلة، جرّب صياغة تانية.'}}drawR();rcAdd(q)};
 window.aiSend=function(q){const i=$('#aiq');if(i&&q)i.value=q;aiRun(q||(i&&i.value))};
 window.openAI=function(pre){openM(`<div class=row><h3 style="flex:1;margin:0">🔎 البحث السريع</h3><button class=g onclick=closeM()>✕</button></div><input id=aiq type=search autocomplete=off placeholder="اسم، رقم، مجموعة، أو سؤال: الأكثر غياباً، الراسبين…" oninput="clearTimeout(window._aT);window._aT=setTimeout(()=>aiRun(this.value),110)" style="margin:10px 0 6px"><div id=ait class=ait></div><div id=aib class=aib></div><small class=mut>بحث فوري داخل بيانات التطبيق، يعمل بدون إنترنت.</small>`);
   const i=$('#aiq');if(typeof pre==='string'&&pre){i.value=pre;aiRun(pre)}else aiRun('');setTimeout(()=>{i&&i.focus()},60)};
@@ -2083,7 +2093,6 @@ window.postRepText=function(k){
  const ids=Object.keys(rec),att=ids.filter(i=>rec[i]==='p'||rec[i]==='l').length,ab=ids.filter(i=>rec[i]==='a').length,L=[];
  ids.forEach(id=>{const s=S(id);if(!s)return;const c=rec[id],why=[];
   if(c==='a'){why.push(absWhy(s,k))}
-  else{const w=hwSl(r,id,s);if(w)why.push(w)}
   (s.nlog||[]).filter(n=>n.fl&&dsLocal(n.ts)===d).forEach(n=>why.push('ملاحظة تحتاج متابعة: '+n.t));
   (db.fu||[]).filter(x=>x.sid===id&&!x.closed&&dsLocal(x.ts)===d&&!String(x.why||'').startsWith('غياب')&&!String(x.why||'').includes('ماحضرش بقاله')).forEach(x=>why.push('مضاف للمتابعة: '+x.why));
   const wy=[...new Set(why)];if(wy.length)L.push({s,a:c==='a'?0:1,why:wy})});
@@ -2605,6 +2614,150 @@ setInterval(()=>{try{nsCheck()}catch(e){}},60000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)try{nsCheck();nsSyncSW()}catch(e){}});
 setTimeout(()=>{try{nsCheck();nsSyncSW()}catch(e){}},3000);
 if('serviceWorker' in navigator)navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.type==='go'&&e.data.page)try{go(e.data.page)}catch(x){}});
+
+/* =====================================================================
+   v19) مركز المتابعة الذكي · تنبيهات متطورة · أولويات وتأجيل
+   ===================================================================== */
+(function(){
+const st19=document.createElement('style');st19.textContent=`
+.fu19-s{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.fu19-s input,.fu19-s select{flex:1;min-width:120px;margin:0}
+.fu19-f{background:linear-gradient(135deg,#fff7e0,#fff);border:1px solid #e8c27a88;border-radius:16px;padding:12px 14px;margin:10px 0}
+[data-theme=dark] .fu19-f,.dark .fu19-f{background:#1c1f35;border-color:#e8c27a55}
+.fu19-r{margin:6px 0;font-size:14px;line-height:1.6}.fu19-sg{margin:8px 0;padding:8px 10px;border-radius:10px;background:var(--card,#f4f6fb);font-size:13px}
+.fu19-sc{font-size:11px;color:var(--mut);margin-inline-start:6px}.fu19-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.fu19-b button,.fu19-b a{padding:10px 6px;font-size:13px;text-align:center;border-radius:12px;text-decoration:none}
+.ns19-g{display:grid;gap:8px;margin:10px 0}.ns19-g label{display:flex;gap:8px;align-items:center;margin:0}.ns19-g input[type=checkbox]{width:auto}.ns19-g input[type=time]{width:auto;margin:0 6px}`;
+document.head.appendChild(st19);
+
+const SNZ=n=>{const e=(db.nf||{})[n.key];return !!(e&&e.snz&&e.snz>Date.now())};
+const W19={abs2:40,abs:28,absn:8,hw:10,late:12,drop:15,grade:15,note:18,norec:3};
+const IC19={abs2:'🚨',abs:'❌',absn:'❌',hw:'📚',late:'⏰',drop:'📉',grade:'📝',note:'🗒️',norec:'⚪'};
+const lastC19=sid=>{let t=0;(db.fu||[]).forEach(x=>{if(x.sid===sid&&x.ts>t)t=x.ts});return t};
+const dAgo19=ts=>Math.floor((Date.now()-ts)/864e5);
+const SUG19={abs2:'كلّم ولي الأمر النهارده واعرف سبب الغياب',abs:'كلّم ولي الأمر النهارده واعرف سبب الغياب',absn:'ابعت لولي الأمر رسالة عن الغياب',hw:'ابعت لولي الأمر تذكير بالواجب',late:'نبّه الطالب على ميعاد الحصة',drop:'راجع معاه الباب واتكلم مع ولي الأمر عن المذاكرة',grade:'راجع معاه الباب واتكلم مع ولي الأمر عن المذاكرة',note:'نفّذ الملاحظة اللي سجلتها عنه',norec:'سجّل حضوره في الحصة اللي فاتت'};
+window.pend=function(){return nots().filter(n=>!n.done&&n.pr<2&&!SNZ(n))};
+nsUrgent=function(){return nots().filter(n=>!n.done&&n.pr===0&&!SNZ(n))};
+const _bu19=window.bellUpd;
+window.bellUpd=function(){_bu19.apply(this,arguments);try{if(navigator.setAppBadge){const n=pend().length;n?navigator.setAppBadge(n):navigator.clearAppBadge&&navigator.clearAppBadge()}}catch(e){}};
+
+function fuModel(){
+ const M=new Map();
+ nots().filter(n=>!n.done&&S(n.sid)).forEach(n=>{let m=M.get(n.sid);if(!m){m={s:S(n.sid),sid:n.sid,items:[],snz:[],score:0};M.set(n.sid,m)}(SNZ(n)?m.snz:m.items).push(n)});
+ const L=[],Z=[];
+ M.forEach(m=>{
+  if(m.snz.length)Z.push(m);
+  if(!m.items.length)return;
+  let sc=0;const ty=new Map();
+  m.items.forEach(n=>{const c=ty.get(n.type)||0;ty.set(n.type,c+1);const w=(W19[n.type]||5);sc+=c===0?w:Math.round(w*.25)});
+  sc=Math.min(sc,120);if(ty.size>=3)sc+=15;else if(ty.size>=2)sc+=8;
+  const lc=lastC19(m.sid);m.lc=lc;m.recent=lc&&dAgo19(lc)<3;if(m.recent)sc=Math.round(sc*.5);
+  m.score=sc;m.lvl=m.items.some(n=>n.pr===0)||sc>=45?0:sc>=18?1:2;
+  m.items.sort((a,b)=>(W19[b.type]||0)-(W19[a.type]||0));m.top=m.items[0];
+  m.age=Math.max(...m.items.map(n=>dAgo19(n.c)));
+  L.push(m)});
+ L.sort((a,b)=>a.lvl-b.lvl||b.score-a.score);
+ return{L,Z}}
+let fuQ='',fuG='',fuSort='risk';
+const lvC19=['#e5484d','#d97706','#2563eb'],lvN19=['عاجل','يحتاج متابعة','معلومة'],lvI19=['🔴','🟠','🔵'];
+const fuFlt19=m=>{if(fuG&&m.s.gid!==fuG)return false;if(fuQ){const q=NN19(fuQ);if(!(NN19(m.s.name).includes(q)||NN19(gname(m.s.gid)).includes(q)||(m.s.phone||'').includes(fuQ)||(m.s.gphone||'').includes(fuQ)))return false}
+ if(fuf!=='all'){const ok=n=>fuf==='grade'?(n.type==='grade'||n.type==='drop'):fuf==='abs'?(n.type==='abs'||n.type==='absn'||n.type==='abs2'):fuf==='hw'?n.type==='hw':n.type===fuf;if(!m.items.some(ok))return false}return true};
+const NN19=x=>String(x||'').replace(/[٠-٩]/g,c=>c.charCodeAt(0)-1632).replace(/[\u064B-\u0652\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').toLowerCase().trim();
+function fuCard19(m,compact){
+ const s=m.s,c=lvC19[m.lvl],rs=m.items.slice(0,compact?2:6).map(n=>`<div class=fu19-r>${IC19[n.type]||'•'} ${esc(n.why)}</div>`).join('')+(m.items.length>(compact?2:6)?`<div class=mut style="font-size:12px">+${m.items.length-(compact?2:6)} حالات أخرى</div>`:'');
+ const meta=[esc(gname(s.gid)),m.items.length+(m.items.length>2?' حالات':' حالة'),m.age>=2?'مفتوحة من '+m.age+' يوم':''].filter(Boolean).join(' · ');
+ const lc=m.lc?`<div class=mut style="font-size:12px">📞 آخر تواصل: ${dAgo19(m.lc)===0?'النهارده':'منذ '+dAgo19(m.lc)+' يوم'}${m.recent?' (الأولوية اتخفّضت)':''}</div>`:'';
+ return `<div class=nt style="border-inline-start:5px solid ${c}"><div class=row><b style=flex:1 onclick="closeM();prof('${s.id}')" style="cursor:pointer">${esc(s.name)}</b><span class=tag style="background:${c}22;color:${c}">${lvI19[m.lvl]} ${lvN19[m.lvl]}<span class=fu19-sc>${m.score}</span></span></div>
+ <div class=mut style="margin:2px 0 6px">${meta}</div>${rs}${lc}<div class=fu19-sg>💡 ${SUG19[m.top.type]||'سجّل متابعة'}</div>
+ <div class=fu19-b><button class=g onclick="nWa('${m.top.key}')">📲 واتساب لولي الأمر</button>${s.gphone?`<a class="g" style="border:1px solid var(--bd);color:var(--tx)" href="tel:${esc(s.gphone)}">📞 اتصال</a>`:`<button class=g onclick="closeM();prof('${s.id}')">👤 ملف الطالب</button>`}
+ <button class=g onclick="fuDoneAll('${s.id}')" style="border-color:#16a34a;color:#16a34a">✓ تمت المتابعة</button><button class=g onclick="fuSnz('${s.id}')">⏰ تأجيل</button></div></div>`}
+function fuList19(){
+ const {L}=fuModel();let l=L.filter(fuFlt19);if(fuSort==='new')l=l.slice().sort((a,b)=>Math.max(...b.items.map(n=>n.c))-Math.max(...a.items.map(n=>n.c)));if(fuSort==='name')l=l.slice().sort((a,b)=>a.s.name.localeCompare(b.s.name,'ar'));
+ if(!l.length)return `<div class=card style="text-align:center"><div style="font-size:40px">✨</div><b>${L.length?'مفيش نتايج بالفلتر ده':'كله تمام، مفيش حالات محتاجة متابعة'}</b></div>`;
+ let h='',last=-1;l.forEach(m=>{if(fuSort==='risk'&&m.lvl!==last){last=m.lvl;h+=`<h3 class=hd style="color:${lvC19[m.lvl]}">${lvI19[m.lvl]} ${lvN19[m.lvl]} (${l.filter(x=>x.lvl===m.lvl).length})</h3>`}h+=fuCard19(m)});return h}
+window.fuDraw=()=>{const e=$('#fulist');if(e)e.innerHTML=fuList19()};
+window.fuQs=v=>{fuQ=v;fuDraw()};window.fuGs=v=>{fuG=v;fuDraw()};window.fuSs=v=>{fuSort=v;fuDraw()};
+window.fuFs=k=>{fuf=k;render()};
+const _fuOld=window.fu;
+window.fu=function(){
+ if(fut==='log')return _fuOld();
+ const {L,Z}=fuModel(),log=db.fu||[],dn=log.filter(x=>x.closed).length,u=L.filter(m=>m.lvl===0).length;
+ const top=`<div class=s4><div><b>${L.length}</b>طلاب محتاجين متابعة</div><div><b style="color:#e5484d">${u}</b>🔴 عاجل</div><div><b style="color:#7c3aed">${Z.length}</b>⏰ مؤجلة</div><div><b style="color:#16a34a">${dn}</b>✅ تمت المتابعة</div></div>
+ <div class=tabs><button class="${fut==='open'?'on':'g'}" onclick="fut='open';render()">المفتوحة</button><button class="${fut==='snz'?'on':'g'}" onclick="fut='snz';render()">المؤجلة (${Z.length})</button><button class="${fut==='log'?'on':'g'}" onclick="fut='log';render()">السجل (${log.length})</button></div>`;
+ if(fut==='snz')return top+(Z.length?Z.map(m=>{const t=Math.max(...m.snz.map(n=>(db.nf[n.key]||{}).snz||0));return `<div class=nt style="border-inline-start:5px solid #7c3aed"><div class=row><b style=flex:1>${esc(m.s.name)}</b><span class=tag>⏰ حتى ${fdt(t)}</span></div><div class=mut>${esc(gname(m.s.gid))} · ${m.snz.length} حالة مؤجلة</div>${m.snz.slice(0,3).map(n=>`<div class=fu19-r>${IC19[n.type]||'•'} ${esc(n.why)}</div>`).join('')}<div class=fu19-b><button class=g onclick="fuUnsnz('${m.sid}')">↩ رجّعها دلوقتي</button><button class=g onclick="prof('${m.sid}')">👤 ملف الطالب</button></div></div>`}).join(''):'<div class=card>مفيش حالات مؤجلة</div>');
+ const chips=`<div class=row style="margin-bottom:8px;overflow-x:auto;flex-wrap:nowrap">${Object.entries(Object.assign({},NCAT,{hw:'واجب'})).map(([k,v])=>`<button class="${fuf===k?'on':'g'}" style="white-space:nowrap" onclick="fuFs('${k}')">${v}</button>`).join('')}</div>`;
+ const f3=L.slice(0,3).map(m=>m.s.name.split(' ')[0]+(m.lvl===0?' 🔴':'')).join('، ');
+ const focus=L.length?`<div class=fu19-f><b>🎯 ابدأ بـ:</b> ${esc(f3)}<div class=mut style="font-size:12px;margin-top:4px">الترتيب حسب الخطورة: تكرار الغياب أولاً ثم الواجب والتأخير والدرجات. اللي اتكلمت معاه من أقل من 3 أيام أولويته بتقل.</div></div>`:'';
+ const gsel=`<select onchange="fuGs(this.value)"><option value="">كل المجموعات</option>${gs().map(g=>`<option value="${g.id}"${fuG===g.id?' selected':''}>${esc(g.name)}</option>`).join('')}</select>`;
+ const ssel=`<select onchange="fuSs(this.value)"><option value="risk"${fuSort==='risk'?' selected':''}>الأخطر أولاً</option><option value="new"${fuSort==='new'?' selected':''}>الأحدث</option><option value="name"${fuSort==='name'?' selected':''}>الاسم</option></select>`;
+ return top+focus+`<div class=fu19-s><input type=search id=fuq placeholder="🔎 ابحث باسم الطالب أو المجموعة أو الرقم" value="${esc(fuQ)}" oninput="fuQs(this.value)">${gsel}${ssel}</div>`+chips+`<div id=fulist>${fuList19()}</div>`};
+window.fuDoneAll=function(sid){const m=fuModel().L.find(x=>x.sid===sid);if(!m)return;
+ openM(`<div class=row><h3 style="flex:1;margin:0">✓ تمت المتابعة</h3><button class=g onclick=closeM()>✕</button></div><p style="margin:8px 0"><b>${esc(m.s.name)}</b><br><span class=mut>هتتقفل ${m.items.length} حالة مرة واحدة</span></p>${m.items.map(n=>`<div class=fu19-r>${IC19[n.type]||'•'} ${esc(n.why)}</div>`).join('')}<label>ملاحظة (اتصلت بولي الأمر، اتفقنا على...)</label><textarea id=fun19 style="height:100px"></textarea><div class=row style="margin-top:10px"><button class=s style="flex:1" onclick="fuDoneGo('${sid}')">💾 حفظ وقفل الحالات</button><button class=g onclick=closeM()>إلغاء</button></div>`)};
+window.fuDoneGo=function(sid){const m=fuModel().L.find(x=>x.sid===sid);if(!m)return;const t=(($('#fun19')||{}).value||'').trim(),nf=db.nf=db.nf||{},now=Date.now();
+ (db.fu=db.fu||[]).unshift({id:uid(),sid,ts:now,note:t,nkey:m.top.key,why:m.items.map(n=>n.why).join(' + ').slice(0,300),closed:true});
+ m.items.forEach(n=>{const e=nf[n.key]||{c:now};e.done=now;nf[n.key]=e});save();closeM();render();toast('✓ اتقفلت '+m.items.length+' حالة')};
+window.fuSnz=function(sid){const s=S(sid);openM(`<div class=row><h3 style="flex:1;margin:0">⏰ تأجيل المتابعة</h3><button class=g onclick=closeM()>✕</button></div><p style="margin:8px 0"><b>${esc(s.name)}</b><br><span class=mut>هترجع تلقائي بعد المدة، وماتتحسبش في الإشعارات.</span></p><div class=hwp><button type=button onclick="fuSnzGo('${sid}',1)">⏰ بكرة</button><button type=button onclick="fuSnzGo('${sid}',3)">⏰ بعد 3 أيام</button><button type=button onclick="fuSnzGo('${sid}',7)">⏰ بعد أسبوع</button></div>`)};
+window.fuSnzGo=function(sid,d){const nf=db.nf=db.nf||{},now=Date.now();nots().filter(n=>n.sid===sid&&!n.done).forEach(n=>{const e=nf[n.key]||{c:now};e.snz=now+d*864e5;nf[n.key]=e});save();closeM();render();toast('⏰ اتأجلت '+(d===1?'ليوم':d+' أيام'))};
+window.fuUnsnz=function(sid){const nf=db.nf||{};nots().filter(n=>n.sid===sid).forEach(n=>{if(nf[n.key])delete nf[n.key].snz});save();render()};
+window.openBell=function(){const {L}=fuModel(),sh=L.slice(0,5);
+ openM(`<div class=row><h3 style="flex:1;margin:0">🔔 الإشعارات</h3><button class=g onclick=closeM()>✕</button></div>`+(sh.length?`<p class=mut style="margin:6px 0">أهم ${sh.length} من ${L.length} طلاب حسب الخطورة</p>`+sh.map(m=>fuCard19(m,true)).join(''):`<div style="text-align:center;padding:30px 0"><div style="font-size:44px">✨</div><b>كل شيء تمام</b><p class=mut>لا توجد حالات تحتاج متابعة</p></div>`)+`<button style="width:100%;margin-top:12px" onclick="closeM();go('fu')">🎯 فتح مركز المتابعة${L.length>5?' ('+(L.length-5)+' إضافية)':''}</button>`)};
+
+/* ---------- تنبيهات الموبايل المتطورة ---------- */
+const NS2D={dg:true,dgT:'08:00',miss:true,fup:true,qh:false,qf:'23:00',qt:'07:00'};
+const ns2=()=>Object.assign({},NS2D,nsGet());
+const P19=t=>{const a=String(t||'0:0').split(':');return (+a[0]||0)*60+(+a[1]||0)};
+const nsQuiet=()=>{const s=ns2();if(!s.qh)return false;const n=new Date(),m=n.getHours()*60+n.getMinutes(),f=P19(s.qf),t=P19(s.qt);return f>t?(m>=f||m<t):(m>=f&&m<t)};
+nsShow=async function(title,body,tag,page){
+ const opt={body,tag,icon:'icons/icon-192.png',badge:'icons/icon-192.png',lang:'ar',dir:'rtl',data:{url:'./',page:page||''}};
+ try{const r=await navigator.serviceWorker.getRegistration();if(r&&r.showNotification){await r.showNotification(title,opt);return true}}catch(e){}
+ try{new Notification(title,opt);return true}catch(e){return false}};
+const gEnd19=g=>{if(g.e24)return P19(g.e24);const st=gStart(g);return st==null?null:st+120};
+nsCheck=function(){
+ const s=ns2();try{if(navigator.setAppBadge){const n=pend().length;n?navigator.setAppBadge(n):navigator.clearAppBadge&&navigator.clearAppBadge()}}catch(e){}
+ if(!s.on||nsPerm()!=='granted')return;
+ const now=new Date(),dow=now.getDay(),nm=now.getHours()*60+now.getMinutes(),t0=dsLocal(now.getTime()),q=nsQuiet(),f=s.fired;let ch=false;
+ const fire=(k,t,b,pg)=>{if(f[k])return;f[k]=Date.now();ch=true;nsShow(t,b,k,pg)};
+ gs().forEach(g=>{if(!gDays(g).includes(dow))return;const st=gStart(g);if(st==null)return;const left=st-nm;
+  if(left>0&&left<=s.lead&&!db.att[g.id+'|'+t0])fire('c|'+g.id+'|'+t0,'⏰ حصة '+g.name+' بعد '+left+' دقيقة','الحصة الساعة '+nsH2(st)+'. افتح البرنامج وسجّل الحضور.','att');
+  const en=gEnd19(g);
+  if(s.miss&&!q&&en!=null&&nm>=en+15&&nm<en+300&&!(db.att[g.id+'|'+t0]&&Object.keys(db.att[g.id+'|'+t0].rec||{}).length))fire('m|'+g.id+'|'+t0,'📝 حصة '+g.name+' خلصت ولسه ماتسجلتش','لو الحصة اتعملت، سجّل الحضور والواجب قبل ما تنسى.','att')});
+ if(s.urgent&&!q){const nw=nsUrgent().filter(n=>!f['u|'+n.key]);
+  if(nw.length){nw.forEach(n=>{f['u|'+n.key]=Date.now()});ch=true;const a=nw[0],sd=S(a.sid)||{name:''},ids=[...new Set(nw.map(n=>n.sid))],nmz=ids.map(i=>(S(i)||{}).name).filter(Boolean);
+   nsShow(nmz.length>1?'🔴 '+nmz.length+' طلاب في حالة عاجلة':'🔴 حالة عاجلة: '+sd.name,nmz.length>1?nmz.slice(0,3).join('، ')+(nmz.length>3?' وغيرهم':''):a.why,'urgent|'+a.key,'fu')}}
+ if(s.dg&&!q&&nm>=P19(s.dgT)&&nm<P19(s.dgT)+180){
+  const cl=gs().filter(g=>gDays(g).includes(dow)&&gStart(g)!=null).sort((a,b)=>gStart(a)-gStart(b)),{L}=fuModel(),u=L.filter(m=>m.lvl===0).length;
+  fire('d|'+t0,'☀️ ملخص النهارده',(cl.length?'حصص النهارده: '+cl.map(g=>g.name+' ('+nsH2(gStart(g))+')').join('، '):'مفيش حصص النهارده')+(L.length?'. '+L.length+' طالب محتاجين متابعة'+(u?' منهم '+u+' عاجل':'')+(L[0]?' (ابدأ بـ '+L[0].s.name.split(' ')[0]+')':''):'. مفيش حالات متابعة ✨'),L.length?'fu':'dash')}
+ if(s.fup&&!q&&nm>=P19(s.dgT)+240&&nm<P19(s.dgT)+600){
+  const od=fuModel().L.filter(m=>m.lvl===0&&m.age>=2&&!m.recent);
+  if(od.length)fire('f|'+t0,'⏳ متابعات عاجلة متأخرة','فيه '+(od.length===1?'طالب':od.length===2?'طالبين':od.length+' طلاب')+' عاجل مفتوح من أكتر من يومين: '+od.slice(0,3).map(m=>m.s.name.split(' ')[0]).join('، '),'fu')}
+ const old=Date.now()-30*864e5;for(const k in f)if(f[k]<old){delete f[k];ch=true}
+ if(ch)nsSet(s)};
+nsSyncSW=async function(){
+ try{const s=ns2();if(!s.on||!('serviceWorker' in navigator))return;const r=await navigator.serviceWorker.getRegistration();if(!r||!r.active)return;
+  const items=[],now=new Date();
+  for(let d=0;d<4;d++){const day=new Date(now.getFullYear(),now.getMonth(),now.getDate()+d),ds=dsLocal(day.getTime());
+   gs().forEach(g=>{if(!gDays(g).includes(day.getDay()))return;const st=gStart(g);if(st==null)return;
+    const at=new Date(day.getFullYear(),day.getMonth(),day.getDate(),0,st).getTime();if(at<=Date.now())return;
+    items.push({id:'c|'+g.id+'|'+ds,from:at-s.lead*60000,at,title:'⏰ حصة '+g.name+' بعد قليل',body:'الحصة الساعة '+nsH2(st),page:'att'})});
+   if(s.dg){const at0=new Date(day.getFullYear(),day.getMonth(),day.getDate(),0,P19(s.dgT)).getTime();if(at0+180*60000>Date.now()&&!(s.qh))items.push({id:'d|'+ds,from:at0,at:at0+180*60000,title:'☀️ ملخص النهارده',body:'افتح التطبيق لمشاهدة حصص النهارده والحالات اللي محتاجة متابعة.',page:'fu'})}}
+  r.active.postMessage({type:'sched',items});
+  if(r.periodicSync)try{await r.periodicSync.register('apex-check',{minInterval:30*60*1000})}catch(e){}}catch(e){}};
+window.nsOpt=function(k,v){const s=ns2();s[k]=v;nsSet(s);nsSyncSW();toast('✓ اتحفظ');if(k==='qh'||k==='dg')nsRefresh()};
+window.nsTestDigest=async function(){if(nsPerm()!=='granted')return nsEnable();const {L}=fuModel();await nsShow('☀️ ملخص النهارده (تجربة)',L.length?L.length+' طالب محتاجين متابعة':'مفيش حالات متابعة','test3','fu');toast('✓ اتبعت')};
+const _nsCard0=nsCard;
+nsCard=function(){const s=ns2(),on=s.on&&nsPerm()==='granted';
+ const base=_nsCard0().replace(/<p class=mut style="font-size:12px">التنبيه بيوصل[^<]*<\/p>/,'');
+ const extra=`<h4 class=sec style="margin-top:14px">🔔 أنواع التنبيهات</h4><div class=ns19-g>
+ <label><input type=checkbox ${s.dg?'checked':''} onchange="nsOpt('dg',this.checked)"> ☀️ ملخص الصبح الساعة <input type=time value="${s.dgT}" onchange="nsOpt('dgT',this.value)"></label>
+ <label><input type=checkbox ${s.miss?'checked':''} onchange="nsOpt('miss',this.checked)"> 📝 تذكير لو الحصة خلصت وماتسجلتش</label>
+ <label><input type=checkbox ${s.fup?'checked':''} onchange="nsOpt('fup',this.checked)"> ⏳ تذكير بالحالات العاجلة المتأخرة (أكتر من يومين)</label>
+ <label style="flex-wrap:wrap"><input type=checkbox ${s.qh?'checked':''} onchange="nsOpt('qh',this.checked)"> 🌙 ساعات الهدوء من <input type=time value="${s.qf}" onchange="nsOpt('qf',this.value)"> إلى <input type=time value="${s.qt}" onchange="nsOpt('qt',this.value)"></label></div>
+ <div class=row>${on?'<button class=g onclick=nsTestDigest()>🧪 جرّب ملخص الصبح</button>':''}</div>
+ <p class=mut style="font-size:12px">التنبيه بيوصل لما التطبيق مفتوح أو شغال في الخلفية، والتنبيهات اللي قبل الحصة بتتجدول كمان. من غير سيرفر مستحيل التنبيه يوصل لو الموبايل قفل التطبيق خالص. لو عاوز تنبيه مضمون افتح التطبيق مرة الصبح. ساعات الهدوء مابتمنعش تنبيه الحصة نفسها.</p>`;
+ return base.replace(/(<h4 class=sec style="margin-top:14px">📤)/,extra+'$1')};
+if(location.search.indexOf('go=')>=0){try{const g=new URLSearchParams(location.search).get('go');setTimeout(()=>{try{go(g)}catch(e){}},900)}catch(e){}}
+window.__ns19={ns2,fuModel,setShow:f=>{nsShow=f}};
+nC=null;/* إصلاح: كاش الإشعارات كان بيتحسب قبل تحميل كل القواعد فيطلع العدد ناقص لحد أول حفظ */
+setTimeout(()=>{try{bellUpd();nsCheck()}catch(e){}},3500);
+})();
 
 window.__ns={nsUrgent,nsCheck,nsSummaryObj,nsGet,nsSet,nsSyncSW};
 

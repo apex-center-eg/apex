@@ -2759,6 +2759,83 @@ nC=null;/* إصلاح: كاش الإشعارات كان بيتحسب قبل تح
 setTimeout(()=>{try{bellUpd();nsCheck()}catch(e){}},3500);
 })();
 
+/* =====================================================================
+   v21) تطوير صفحة السجل وصفحة الحضور (ملخص · بحث · فترات سريعة · تحضير الباقي)
+   ===================================================================== */
+(function(){
+const st=document.createElement('style');st.textContent=`
+.lgsum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:0 0 12px}.lgsum div{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:10px 2px;text-align:center;font-size:11.5px;color:var(--mut);line-height:1.3}.lgsum b{display:block;font-size:20px;color:var(--tx,inherit)}
+.lgch{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}.lgch button{padding:7px 14px;font-size:13px;border-radius:99px;box-shadow:none}
+.lgm{display:flex;align-items:center;gap:8px;margin:16px 2px 8px;font-weight:800;color:var(--pr);font-size:14px}.lgm i{flex:1;height:1px;background:var(--bd)}.lgm span{font-weight:600;color:var(--mut);font-size:12px}
+.lgr{display:flex;align-items:center;gap:8px;margin:2px 0 6px}.lgr .bar{flex:1;margin:0;height:7px}.lgr b{font-size:12.5px;min-width:38px;text-align:left}
+.gbadge{padding:3px 10px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid var(--bd);background:var(--bg)}.gbadge.d{background:var(--okb);color:var(--okf);border-color:var(--okbd)}.gbadge.w{background:var(--lb);color:var(--lf);border-color:var(--lbd)}.gbadge.t{color:var(--pr)}
+.atb{padding:10px 12px!important;border-radius:18px!important;margin-bottom:10px}
+`;document.head.appendChild(st);
+
+let lgQ='';
+const mLab=d=>new Date(d+'T12:00').toLocaleDateString('ar-EG',{month:'long',year:'numeric'});
+const iso=n=>{const x=new Date();x.setDate(x.getDate()-n);const z=new Date(x.getTime()-x.getTimezoneOffset()*6e4);return z.toISOString().slice(0,10)};
+window.lgRange=function(k){const t=today();
+ if(k==='all'){lgFrom='';lgTo=''}
+ else if(k==='w'){lgFrom=iso(6);lgTo=t}
+ else if(k==='m'){lgFrom=t.slice(0,8)+'01';lgTo=t}
+ else if(k==='30'){lgFrom=iso(29);lgTo=t}
+ render()};
+window.lgSearch=function(v){const q=lgNm(v),ts=q.split(' ').filter(Boolean);let n=0;
+ document.querySelectorAll('#lgcards .lgc').forEach(el=>{const ok=!ts.length||ts.every(t=>el.dataset.s.includes(t));el.style.display=ok?'':'none';if(ok)n++});
+ document.querySelectorAll('#lgcards .lgm').forEach(h=>{let nx=h.nextElementSibling,any=false;while(nx&&!nx.classList.contains('lgm')){if(nx.style.display!=='none')any=true;nx=nx.nextElementSibling}h.style.display=any?'':'none'});
+ const e=document.getElementById('lgnn');if(e)e.textContent=ts.length?(n?n+' حصة مطابقة':'لا توجد نتائج'):''};
+
+window.log=function(){
+ const it=sesKeys().map(k=>({k,g:k.split('|')[0],d:sesDate(k)})).filter(x=>x.d&&(!lg||x.g===lg)&&(!lgFrom||x.d>=lgFrom)&&(!lgTo||x.d<=lgTo)&&lgStOk(x.k)).sort((a,b)=>b.d.localeCompare(a.d)||a.g.localeCompare(b.g));
+ const so=[['all','كل الحصص'],['exam','فيها امتحان'],['noexam','بدون امتحان'],['abs','فيها غياب'],['noabs','بدون غياب'],['hw','فيها واجب ناقص / غير مسلّم']];
+ const bar=`<div class=lgf><select class=w onchange="lgSet('g',this.value)"><option value="">كل المجموعات</option>${db.groups.map(g=>`<option value="${g.id}" ${g.id===lg?'selected':''}>${esc(g.name)}${g.arch?' (أرشيف)':''}</option>`).join('')}</select><div><label>من تاريخ</label><input type=date value="${lgFrom}" onchange="lgSet('f',this.value)"></div><div><label>إلى تاريخ</label><input type=date value="${lgTo}" onchange="lgSet('t',this.value)"></div><select class=w onchange="lgSet('s',this.value)">${so.map(([v,l])=>`<option value="${v}" ${v===lgSt?'selected':''}>${l}</option>`).join('')}</select>${(lg||lgFrom||lgTo||lgSt!=='all')?`<button type=button class="g w" onclick="lgSet('r')">↺ إزالة الفلاتر</button>`:''}</div>`;
+ const chips=`<div class=lgch><button type=button class="${!lgFrom&&!lgTo?'':'g'}" onclick="lgRange('all')">كل الفترة</button><button type=button class=g onclick="lgRange('w')">آخر 7 أيام</button><button type=button class=g onclick="lgRange('m')">الشهر ده</button><button type=button class=g onclick="lgRange('30')">آخر 30 يوم</button></div>`;
+ let P=0,A=0,EX=0;
+ const info=it.map(x=>{const r=sesRec(x.k),c=sesCnt(r),mx=+(r.ex||{}).max,tot=c.p+c.l+c.a;P+=c.p+c.l;A+=c.a;if(mx>0)EX++;
+  let avg=null;if(mx>0){const v=Object.keys(r.sc||{}).filter(i=>r.rec[i]==='p'||r.rec[i]==='l').map(i=>r.sc[i]).filter(z=>z!==''&&z!==undefined&&!isNaN(+z)).map(Number);if(v.length)avg=Math.round(v.reduce((a,b)=>a+b,0)/v.length/mx*100)}
+  return {x,r,c,mx,tot,rate:tot?Math.round((c.p+c.l)/tot*100):null,avg}});
+ const rt=P+A?Math.round(P/(P+A)*100):null;
+ const sum=it.length?`<div class=lgsum><div><b>${it.length}</b>حصة</div><div><b>${rt===null?'—':rt+'%'}</b>نسبة الحضور</div><div><b>${A}</b>إجمالي الغياب</div><div><b>${EX}</b>امتحان</div></div>`:'';
+ let lastM='',html='';
+ info.forEach(o=>{const x=o.x,r=o.r,c=o.c,mx=o.mx,se=db.sessions.find(s=>s.k===x.k)||{},h=hwCnt(r),hh=h.d+h.m+h.n,m=mLab(x.d);
+  if(m!==lastM){lastM=m;const n=info.filter(z=>mLab(z.x.d)===m).length;html+=`<div class=lgm>${m}<i></i><span>${n} حصة</span></div>`}
+  const nms=Object.keys(r.rec||{}).map(i=>{const s=S(i);return s?s.name:''}).join(' ');
+  const hay=lgNm([fd(x.d),gname(x.g),se.topic,se.note,se.hw,nms].join(' '));
+  const col=o.rate===null?'var(--mut)':o.rate>=85?'#16a34a':o.rate>=70?'#d97706':'#e5484d';
+  html+=`<div class=lgc data-s="${esc(hay)}" onclick="lgOpen('${x.k}')"><div class=row><b style=flex:1>${fd(x.d)}</b><span class=tag>${esc(gname(x.g))}</span></div>`+
+  (o.rate!==null?`<div class=lgr><div class=bar><i style="width:${o.rate}%;background:${col}"></i></div><b style="color:${col}">${o.rate}%</b></div>`:'')+
+  `<div class=lgs><span class=lp>✔ حاضر ${c.p+c.l}</span>${c.l?`<span style="color:#d97706">⏰ متأخر ${c.l}</span>`:''}<span class=la>✖ غائب ${c.a}</span><span class=lx>${mx>0?'📝 امتحان من '+mx+(o.avg!==null?' · متوسط '+o.avg+'%':''):'بدون امتحان'}</span></div><div class=mut>📚 الواجب: ${hh?`✔ ${h.d} · ◐ ${h.m} · ✖ ${h.n}`:'لم يُسجَّل'}</div>${se.topic?`<div style="margin-top:6px">${esc(String(se.topic).slice(0,70))}</div>`:''}</div>`});
+ const srch=`<input id=lgqq type=search autocomplete=off placeholder="🔎 ابحث بالموضوع أو اسم طالب أو اسم المجموعة..." oninput="lgSearch(this.value)" style="margin-bottom:6px"><div id=lgnn class=mut style="margin:0 2px 8px;min-height:18px"></div>`;
+ return `<p class=mut style="margin:-8px 2px 12px">كل الحصص المسجلة 🔒 للعرض فقط — اضغط على أي حصة لفتح تفاصيلها.</p>`+bar+chips+sum+(it.length?srch:'')+`<div id=lgcards>${html||'<div class=card>لا توجد حصص مطابقة. أي حصة تنهيها هتظهر هنا تلقائياً.</div>'}</div>`};
+
+/* ---------- الحضور ---------- */
+const _att21=window.att;
+window.attAllAsk=function(){const d=getD(cg+'|'+cd),u=sts().filter(s=>s.gid===cg&&!d.rec[s.id]).length;
+ if(!u){toast('كل الطلاب متسجّلين بالفعل');return}
+ openM(`<h3>✔ تحضير الباقي</h3><p>هيتسجّل <b>${u}</b> طالب لسه ماتسجّلوش «حاضر».</p><p class=mut>اللي سجّلتهم قبل كده (حاضر / متأخر / غايب) مش هيتغيروا، وتقدر تغيّر أي طالب بضغطة. مفيش حاجة بتتحفظ نهائي غير لما تدوس «إنهاء الحصة».</p><div class=row><button class=s onclick="attAllGo()">تأكيد</button><button class=g onclick="closeM()">رجوع</button></div>`)};
+window.attAllGo=function(){closeM();const d=getD(cg+'|'+cd);let n=0;sts().filter(s=>s.gid===cg&&!d.rec[s.id]).forEach(s=>{d.rec[s.id]='p';n++});saveDR();keep();toast('✔ اتسجّل '+n+' طالب حاضر')};
+window.attFind=function(v){const q=lgNm(v),ts=q.split(' ').filter(Boolean);let n=0;
+ document.querySelectorAll('.ac').forEach(el=>{const nm=el.querySelector('.ac-nm');const t=lgNm(nm?nm.firstChild&&nm.firstChild.textContent||nm.textContent:'');const ok=!ts.length||ts.every(w=>t.includes(w));el.style.display=ok?'':'none';if(ok)n++});
+ const e=document.getElementById('atn');if(e)e.textContent=ts.length?(n?n+' طالب':'لا توجد نتائج'):''};
+window.attDate=function(v){if(v){cd=v;render()}};
+window.att=function(){
+ if(!cg){
+  const t0=cd,dow=pd(t0).getDay(),G=gs(),anyD=G.some(g=>gDays(g).length);
+  const rows=G.map(g=>{const k=g.id+'|'+t0,saved=db.att[k],dk=DR[k],draft=!!(dk&&Object.keys(dk.rec||{}).length),sched=!anyD||gDays(g).includes(dow),n=sts().filter(s=>s.gid===g.id).length;
+   let b='';if(saved){const c=sesCnt(saved);b=`<span class="gbadge d">✅ اتسجلت · حاضر ${c.p+c.l} · غايب ${c.a}</span>`}else if(draft){const m=Object.keys(dk.rec).length;b=`<span class="gbadge w">✍️ مسودة ${m}/${n}</span>`}else if(sched&&anyD)b=`<span class="gbadge t">📅 ميعادها النهاردة</span>`;
+   return {g,n,b,saved,draft,sched}}).sort((a,b)=>(a.saved?1:0)-(b.saved?1:0)||(b.sched?1:0)-(a.sched?1:0)||(gStart(a.g)??99999)-(gStart(b.g)??99999));
+  const isT=t0===today();
+  return `<div class="card atb"><div class=row><b style=flex:1>${isT?'📅 النهاردة':'📅 يوم'} ${fd(t0)}</b><input type=date value="${t0}" onchange="attDate(this.value)" style="max-width:150px"></div>${isT?'':`<button type=button class=g style="margin-top:8px;width:100%" onclick="attDate('${today()}')">↩ ارجع لتاريخ النهاردة</button>`}</div>`+
+  `<p class=mut style="margin:0 2px 12px">اختر المجموعة</p>`+(rows.map(o=>`<button class="g gc" onclick="cg='${o.g.id}';at='att';render();scrollTo(0,0)"><div class=row><b class=big style=flex:1>${esc(o.g.name)}</b>${o.b}</div><span class=mut>${esc(o.g.time)} · ${o.n} طالب</span></button>`).join('')||'<div class=card>أضف مجموعة أولاً</div>')}
+ let h=_att21.apply(this,arguments);
+ if(h.indexOf('class="ac ')>-1&&h.indexOf('id=sesb')>-1){
+  const k=cg+'|'+cd,d=getD(k),u=sts().filter(s=>s.gid===cg&&!d.rec[s.id]).length,n=sts().filter(s=>s.gid===cg).length;
+  const tb=`<div class="card atb"><div class=row style="gap:8px"><input id=atq type=search autocomplete=off placeholder="🔎 دوّر على طالب..." oninput="attFind(this.value)" style="flex:1;margin:0">${u?`<button type=button class=g style="white-space:nowrap" onclick="attAllAsk()">✔ حضّر الباقي (${u})</button>`:''}</div><div id=atn class=mut style="min-height:4px;margin-top:4px"></div></div>`;
+  let i=h.indexOf('<div class="ac ');const w=h.indexOf('وقت الحصة الفعلي');if(w>-1){const a=Math.max(h.lastIndexOf('<div class=card',w),h.lastIndexOf('<div class="card',w),h.lastIndexOf('<details class=card',w));if(a>-1&&a<i)i=a}h=h.slice(0,i)+tb+h.slice(i)}
+ return h};
+})();
+
 window.__ns={nsUrgent,nsCheck,nsSummaryObj,nsGet,nsSet,nsSyncSW};
 
 })();

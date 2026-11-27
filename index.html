@@ -2892,6 +2892,65 @@ window.__ns={nsUrgent,nsCheck,nsSummaryObj,nsGet,nsSet,nsSyncSW};
 })();
 
 
+/* صفحة ولي الأمر: نسخة احتياطية + مزامنة + تعطيل + نسخ اللينك */
+(function(){
+const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v)}catch(e){return null}};
+const DEF_SRV='';
+const srv=()=>(LS('psrv')||DEF_SRV).replace(/\/$/,'');
+const rangeM=()=>{const v=LS('prange');return v===null?0:+v};
+const lvl=g=>g>=90?'ممتاز':g>=80?'جيد جداً':g>=70?'جيد':g>=60?'مقبول':'يحتاج دعم';
+const rev=()=>{try{return JSON.parse(LS('prev')||'{}')}catch(e){return{}}};
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+function startDate(){const m=rangeM();if(!m)return '';const d=new Date();d.setMonth(d.getMonth()-m);return dsLocal(d.getTime())}
+function viewOf(s){const st=startDate(),ok=d=>!st||!d||d>=st,gr=(db.groups||[]).find(g=>g.id===s.gid);
+ const recs=sRecs(s).filter(x=>ok(x.d));
+ const sessions=recs.map(x=>({date:x.d,title:'حصة',topic:x.topic||'',status:x.c==='a'?'absent':x.c==='l'?'late':'present',...(x.tm?{time:x.tm}:{})}));
+ const homework=[];recs.forEach(x=>{if(x.c==='a')return;const r=db.att[x.k]||{},h=(r.hws||{})[s.id];if(h)homework.push({title:'واجب '+(x.topic||''),date:x.d,status:h==='d'?'done':h==='m'?'partial':'missing'})});
+ const grades=(s.grades||[]).filter(g=>ok(g.d)).map(g=>({test:g.t,date:g.d||'',score:+g.sc,max:+g.max,rating:lvl(g.max?g.sc/g.max*100:g.sc)}));
+ const notes=(s.nlog||[]).filter(n=>!n.fl).map(n=>({date:dsLocal(n.ts),text:n.t,star:false})).filter(n=>ok(n.date));
+ const pres=sessions.filter(x=>x.status!=='absent').length,avg=grades.length?Math.round(grades.reduce((a,g)=>a+(g.max?g.score/g.max*100:g.score),0)/grades.length*10)/10:null;
+ const best=grades.reduce((a,g)=>!a||(g.max?g.score/g.max:0)>(a.max?a.score/a.max:0)?g:a,null);
+ return {name:s.name,grade:'',group:gr?gr.name:'',summary:{attendancePct:sessions.length?Math.round(pres/sessions.length*100):null,avg,hwDone:homework.filter(h=>h.status==='done').length,hwTotal:homework.length,level:avg==null?'':lvl(avg),best:best?Math.round(best.max?best.score/best.max*100:best.score):null,bestTest:best?best.test:''},sessions,grades,homework,notes,next:null}}
+function payload(){const all=(db.students||[]).filter(s=>s.gphone&&String(s.gphone).replace(/\D/g,'').length>=10);
+ const students=all.map(s=>({id:s.id,phone:s.gphone,view:viewOf(s)}));
+ const t={students:students.length,sessions:0,grades:0,homework:0,notes:0};students.forEach(x=>{t.sessions+=x.view.sessions.length;t.grades+=x.view.grades.length;t.homework+=x.view.homework.length;t.notes+=x.view.notes.length});
+ return{students,t,skipped:(db.students||[]).length-all.length}}
+const cnt=()=>{const st=db.students||[];let g=0,n=0;st.forEach(s=>{g+=(s.grades||[]).length;n+=(s.nlog||[]).length});return{st:st.length,se:(db.sessions||[]).length,g,n,fl:st.reduce((a,s)=>a+(s.nlog||[]).filter(x=>x.fl).length,0)}};
+const key=()=>LS('pkey');
+async function api(path,method,body){const r=await fetch(srv()+path,{method,headers:{'content-type':'application/json',authorization:'Bearer '+key()},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));return{status:r.status,j}}
+function msg(t){const m=document.getElementById('parmsg');if(m)m.textContent=t}
+window.parentCard=function(){const c=cnt(),k=!!key(),sv=srv(),rm=rangeM(),rv=rev();
+ return `<div class=card id=parc><h3 class=hd>👨‍👩‍👦 صفحة ولي الأمر</h3>
+<p class=mut>${k?'✅ الجهاز ده متفعّل كحساب المدرس':'⚠️ الجهاز لسه مش متفعّل (افتح لينك التفعيل مرة واحدة)'}</p>
+<div class=row style="flex-wrap:wrap;gap:6px"><span class=chip>👤 ${c.st} طالب</span><span class=chip>📅 ${c.se} حصة</span><span class=chip>📝 ${c.g} درجة</span><span class=chip>🗒️ ${c.n} ملاحظة</span></div>
+<p class=mut>🚩 ${c.fl} ملاحظة محتاجة متابعة، <b>مش هتتبعت</b> لولي الأمر أبداً.</p>
+<button class=g onclick="parentBackup()">⬇️ نسخة احتياطية كاملة (JSON)</button>
+<h4 style="margin:14px 0 6px">⏳ المدة اللي ولي الأمر يشوفها</h4>
+<select id=prng onchange="parentRange(this.value)"><option value=0 ${rm==0?'selected':''}>السنة كلها</option><option value=1 ${rm==1?'selected':''}>آخر شهر</option><option value=3 ${rm==3?'selected':''}>آخر 3 شهور</option><option value=6 ${rm==6?'selected':''}>آخر 6 شهور</option></select>
+<h4 style="margin:14px 0 6px">🔄 الرفع</h4>
+<input id=psrv placeholder="عنوان السيرفر" value="${esc(sv)}" onchange="parentSrv(this.value)" style="direction:ltr">
+<div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button></div>
+<p class=mut id=parmsg>${sv?'':'⏸️ الرفع متوقف لحد ما السيرفر يتفعّل. مفيش حاجة بتتبعت دلوقتي.'}</p>
+<h4 style="margin:14px 0 6px">🚫 إيقاف ولي أمر</h4>
+${(db.students||[]).slice(0,400).map(s=>`<div class=row style="margin-bottom:6px"><span style=flex:1>${esc(s.name)}</span><button class="g" onclick="parentRevoke('${s.id}')" ${k&&sv?'':'disabled'}>${rv[s.id]?'✅ تفعيل':'⛔ إيقاف'}</button></div>`).join('')||'<p class=mut>لا يوجد طلاب</p>'}</div>`};
+window.parentBackup=function(){try{const c=cnt(),b=new Blob([JSON.stringify(db)],{type:'application/json'}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='apex-backup-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();a.remove();msg('✅ اتحفظت نسخة فيها '+c.st+' طالب و'+c.se+' حصة و'+c.g+' درجة و'+c.n+' ملاحظة')}catch(e){alert('تعذّر حفظ النسخة')}};
+window.parentRange=v=>{LS('prange',String(+v));msg('اتحفظت المدة. هتتطبق في الرفع الجاي.')};
+window.parentSrv=v=>{LS('psrv',v.trim());render()};
+window.parentLink=async function(){const u=(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';try{await navigator.clipboard.writeText(u);msg('✅ اتنسخ: '+u)}catch(e){msg(u)}};
+window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ رفع بيانات أولياء الأمور</h3><p>هيترفع: ${p.t.students} طالب، ${p.t.sessions} حصة، ${p.t.grades} درجة، ${p.t.homework} واجب، ${p.t.notes} ملاحظة.<br>المدة: ${r?'آخر '+r+' شهور':'السنة كلها'}.${p.skipped?'<br>⚠️ '+p.skipped+' طالب من غير رقم ولي أمر صالح مش هيترفعوا.':''}</p><p class=mut>الملاحظات المحتاجة متابعة وأرقام التليفونات مش بتتبعت. خدت نسخة احتياطية تلقائية قبل الرفع.</p><div class=row><button onclick="parentSync()">متابعة</button><button class=g onclick=closeM()>إلغاء</button></div>`)};
+window.parentSync=async function(){closeM();try{snap('قبل رفع بيانات أولياء الأمور')}catch(e){}const p=payload();msg('⏳ جاري الرفع...');
+ try{const r=await api('/admin/sync','POST',{students:p.students,replace:true});if(!r.j.ok)return msg('❌ فشل الرفع'+(r.status===401?' (الجهاز مش متفعّل أو مقفول مؤقتاً)':''));
+  const c=r.j,bad=['students','sessions','grades','homework','notes'].filter(k=>c[k]!==p.t[k]);
+  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة')}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
+window.parentRevoke=async function(id){const rv=rev(),to=!!rv[id];try{const r=await api('/admin/revoke','POST',{id,active:to});if(r.j.ok&&r.j.changed){if(to)delete rv[id];else rv[id]=1;LS('prev',JSON.stringify(rv));render()}else msg('❌ الطالب مش مرفوع على السيرفر (اعمل رفع الأول)')}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
+window.__parentPayload=payload;
+/* تفعيل الجهاز: لينك لمرة واحدة */
+(async function(){const m=/^#claim=([A-Za-z0-9_-]{8,128})$/.exec(location.hash||'');if(!m)return;history.replaceState(null,'',location.pathname+location.search);
+ const code=m[1],sv=srv();if(!sv||key())return;const raw=crypto.getRandomValues(new Uint8Array(32)),k=hex(raw);
+ try{const r=await fetch(sv+'/admin/claim',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({code,key:k})});const j=await r.json().catch(()=>({}));if(j.ok){LS('pkey',k);setTimeout(()=>{try{toast('✅ الجهاز اتفعّل')}catch(e){}},500)}else setTimeout(()=>{try{toast('❌ اللينك منتهي أو اتستخدم')}catch(e){}},500)}catch(e){}})();
+const _t=window.tools;window.tools=function(){return _t()+parentCard()};
+})();
+
 /* بدء التشغيل */
 applyBrand();setTimeout(()=>{try{render()}catch(e){}},0);
 })();

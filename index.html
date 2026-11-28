@@ -607,12 +607,12 @@ function reg(){
  if(!gs().length)return `<div class=card>أضف مجموعة أولاً. <button onclick="go('groups')">المجموعات</button></div>`;
  if(rv==='form')return `<button class=g style="margin-bottom:14px" onclick="rv='list';render()">→ رجوع للقائمة</button>
  <div class=card><h3 class=hd>👤 بيانات الطالب</h3><div class=fg><div class=w><label>اسم الطالب</label><input id=n></div><div><label>النوع</label><select id=sxs><option value=m>ذكر</option><option value=f>أنثى</option></select></div><div><label>المجموعة</label><select id=g>${gs().map(g=>`<option value=${g.id}>${esc(g.name)}</option>`).join('')}</select></div><div class=w><label>المدرسة</label><input id=sc></div></div></div>
- <div class=card><h3 class=hd>📞 أرقام التواصل</h3><div class=fg><div><label>هاتف الطالب</label><input id=p type=tel></div><div><label>هاتف ولي الأمر (أساسي) *</label><input id=gp type=tel></div></div></div>
+ <div class=card><h3 class=hd>📞 أرقام التواصل</h3><div class=fg><div><label>هاتف الطالب</label><input id=p type=tel></div><div><label>هاتف ولي الأمر (أساسي) *</label><input id=gp type=tel><label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input id=gpv type=checkbox style="width:auto"> ☎️ كلمت ولي الأمر وتأكدت من الرقم</label></div></div></div>
  <button class=s style="width:100%;padding:14px" onclick="addS()">💾 حفظ الطالب</button>`;
  return `<button style="width:100%;padding:14px;margin-bottom:14px" onclick="newS()">➕ تسجيل طالب جديد</button><input placeholder="🔍 بحث بالاسم أو الهاتف أو المدرسة" value="${esc(q)}" oninput="q=this.value;list()"><div id=ls></div>`;
 }
 function addS(){const n=$('#n').value.trim(),gp=$('#gp').value.trim();if(!n||!gp)return alert('الاسم ورقم ولي الأمر مطلوبان');{const w=window.gpWarn?gpWarn(gp,$('#p').value,''):[];if(w.length&&!confirm('تنبيه على رقم ولي الأمر:\n'+w.join('\n')+'\n\nتحفظ الطالب برضه؟'))return}
- db.students.push({id:uid(),name:n,sex:$('#sxs').value,gid:$('#g').value,phone:$('#p').value,gphone:gp,school:$('#sc').value,notes:'',grades:[]});save();rv='list';render();scrollTo(0,0)}
+ const nid=uid();db.students.push({id:nid,name:n,sex:$('#sxs').value,gid:$('#g').value,phone:$('#p').value,gphone:gp,school:$('#sc').value,notes:'',grades:[]});if(($('#gpv')||{}).checked&&validPh(gp)){const v=pver();v[nid]=gp;LS('pver',JSON.stringify(v))}save();rv='list';render();scrollTo(0,0)}
 function list(){const el=$('#ls');if(!el)return;const f=sts().filter(s=>(s.name+s.phone+s.gphone+s.school).includes(q));
  el.innerHTML=gs().map(g=>{const m=f.filter(s=>s.gid===g.id);return m.length?`<h3 class=hd style="margin-top:16px">${esc(g.name)} <span class=tag>${m.length}</span></h3>`+m.map(s=>`<button class="g gc" onclick="prof('${s.id}')"><b class="${alerts(s).length?'warn':''}">${esc(s.name)} ${alerts(s).length?'⚠️':''}</b><br><small>${esc(s.school)}${s.school&&s.phone?' · ':''}${esc(s.phone)}</small><br>${pBadge(s)}</button>`).join(''):''}).join('')||'<div class=card>لا يوجد طلاب</div>'}
 
@@ -2912,13 +2912,14 @@ function viewOf(s){const st=startDate(),ok=d=>!st||!d||d>=st,gr=(db.groups||[]).
  const best=grades.reduce((a,g)=>!a||(g.max?g.score/g.max:0)>(a.max?a.score/a.max:0)?g:a,null);
  return {name:s.name,grade:'',group:gr?gr.name:'',summary:{attendancePct:sessions.length?Math.round(pres/sessions.length*100):null,avg,hwDone:homework.filter(h=>h.status==='done').length,hwTotal:homework.length,level:avg==null?'':lvl(avg),best:best?Math.round(best.max?best.score/best.max*100:best.score):null,bestTest:best?best.test:''},sessions,grades,homework,notes,next:null}}
 function payload(){const all=(db.students||[]).filter(s=>s.id&&s.name);
- const students=all.map(s=>({id:s.id,phone:s.gphone||'',view:viewOf(s)}));
+ const students=all.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,view:viewOf(s)}));
  const t={students:students.length,sessions:0,grades:0,homework:0,notes:0};students.forEach(x=>{t.sessions+=x.view.sessions.length;t.grades+=x.view.grades.length;t.homework+=x.view.homework.length;t.notes+=x.view.notes.length});
  return{students,t,skipped:0}}
 const cnt=()=>{const st=db.students||[];let g=0,n=0;st.forEach(s=>{g+=(s.grades||[]).length;n+=(s.nlog||[]).length});return{st:st.length,se:(db.sessions||[]).length,g,n,fl:st.reduce((a,s)=>a+(s.nlog||[]).filter(x=>x.fl).length,0)}};
 const key=()=>LS('pkey');
 async function api(path,method,body){const r=await fetch(srv()+path,{method,headers:{'content-type':'application/json',authorization:'Bearer '+key()},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));return{status:r.status,j}}
 
+const pver=()=>{try{return JSON.parse(LS('pver')||'{}')}catch(e){return{}}};const isVer=s=>pver()[s.id]&&pver()[s.id]===s.gphone;const notViewable=s=>!validPh(s.gphone)||(!isVer(s)&&gpWarn(s.gphone,s.phone,s.id).filter(x=>!/إخوات/.test(x)).length>0);
 const pcodes=()=>{try{return JSON.parse(LS('pcodes')||'{}')}catch(e){return{}}},pconf=()=>{try{return JSON.parse(LS('pconf')||'{}')}catch(e){return{}}},pstat=()=>{try{return JSON.parse(LS('pstat')||'{}')}catch(e){return{}}};
 const nph=x=>{let d=String(x||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[۰-۹]/g,c=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(c)).replace(/\D/g,'');if(d.startsWith('0020'))d=d.slice(4);else if(d.startsWith('20')&&d.length>=12)d=d.slice(2);if(d.length===10&&d[0]==='1')d='0'+d;return d};
 const validPh=x=>/^01[0125]\d{8}$/.test(nph(x));
@@ -2926,9 +2927,10 @@ function gpWarn(gp,own,selfId){const w=[],g=nph(gp);if(!validPh(gp))w.push('رق
  if(g&&own&&nph(own)===g)w.push('رقم ولي الأمر نفس رقم الطالب نفسه');
  const oth=(db.students||[]).filter(s=>s.id!==selfId&&g&&nph(s.gphone)===g);if(oth.length)w.push('نفس الرقم مسجل كولي أمر عند: '+oth.slice(0,3).map(s=>s.name).join('، ')+' (طبيعي لو إخوات)');
  const me=(db.students||[]).filter(s=>s.id!==selfId&&g&&nph(s.phone)===g);if(me.length)w.push('الرقم ده هو رقم الطالب نفسه عند: '+me.slice(0,3).map(s=>s.name).join('، '));return w}
-window.gpWarn=gpWarn;window.pBadge=function(s){const ok=pconf()[s.id]&&pconf()[s.id]===s.gphone,w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/إخوات/.test(x));
+window.pVerify=function(id){const s=S(id);if(!s)return;const v=pver();if(v[id]&&v[id]===s.gphone){delete v[id]}else{if(!validPh(s.gphone))return alert('رقم ولي الأمر شكله مش صحيح. صححه الأول (موبايل مصري 11 رقم).');v[id]=s.gphone}LS('pver',JSON.stringify(v));render();setTimeout(()=>{try{window.parentSync()}catch(e){}},200)};
+window.gpWarn=gpWarn;window.pBadge=function(s){const ok=(pconf()[s.id]&&pconf()[s.id]===s.gphone)||(pver()[s.id]&&pver()[s.id]===s.gphone),w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/إخوات/.test(x));
  return (ok?'<span class=tag style="background:#16a34a;color:#fff">✅ رقم ولي الأمر متأكد</span>':'<span class=tag style="background:#d97706;color:#fff">⏳ رقم ولي الأمر لسه ما اتأكدش</span>')+(w.length?' <span class=tag style="background:#e5484d;color:#fff" title="'+esc(w.join(' | '))+'">🚨 راجع الرقم</span>':'')};
-const groupLink=()=>(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/#request';
+const groupLink=()=>(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';
 function pending(){const st=pstat();return (db.students||[]).filter(s=>st[s.id]&&st[s.id].req>0&&st[s.id].active!==0&&!(window.__sentNow||{})[s.id]).sort((a,b)=>st[a.id].req-st[b.id].req).map(s=>({id:s.id,name:s.name}))}
 window.parentGroupCopy=async function(){try{await navigator.clipboard.writeText(groupLink());msg('✅ اتنسخ لينك الجروب')}catch(e){msg(groupLink())}};
 window.parentSendNext=function(){const ps=pending();if(!ps.length)return msg('مفيش طلبات');window.__sentNow=window.__sentNow||{};window.__sentNow[ps[0].id]=1;parentSendCode(ps[0].id)};
@@ -2957,14 +2959,13 @@ window.parentCard=function(){if(key()&&srv()&&Date.now()-(+LS('pstat_t')||0)>600
 <input id=psrv placeholder="عنوان السيرفر" value="${esc(sv)}" onchange="parentSrv(this.value)" style="direction:ltr">
 <div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button></div>
 <p class=mut id=parmsg>${sv?'':'⏸️ الرفع متوقف لحد ما السيرفر يتفعّل. مفيش حاجة بتتبعت دلوقتي.'}</p>
-<h4 style="margin:14px 0 6px">📩 طلبات أولياء الأمور</h4>
-<p class=mut>لينك الجروب: <span dir=ltr>${esc(groupLink())}</span></p><button class=g onclick="parentGroupCopy()">🔗 نسخ لينك الجروب</button>
-${(()=>{const ps=pending();return ps.length?'<p class=mut>'+ps.length+' طلب مستني كود:</p>'+ps.slice(0,40).map(x=>`<div class=row style="margin-bottom:6px"><span style=flex:1>📩 طلب من ولي أمر <b>${esc(x.name)}</b></span><button onclick="parentSendCode('${x.id}')" ${k&&sv?'':'disabled'}>📲 إرسال كود</button></div>`).join('')+(ps.length>1?'<button class=s style="width:100%;margin-top:6px" onclick="parentSendNext()">📲 إرسال للتالي ('+ps.length+' متبقي)</button><p class=mut>الواتساب بيتفتح لكل واحد، وإنت بتضغط إرسال. الكود بيروح لرقم ولي الأمر المسجل مش لرقم الطلب.</p>':''):'<p class=mut>مفيش طلبات جديدة</p>'})()}
+<h4 style="margin:14px 0 6px">🔗 لينك جروب أولياء الأمور</h4>
+<p class=mut>ولي الأمر يفتح اللينك ويكتب اسم ابنه ورقم موبايله ويشوف المتابعة. مفيش أكواد.</p>${(()=>{const n=(db.students||[]).filter(notViewable);return n.length?'<p class=mut style="color:#e5484d">⏸️ '+n.length+' طالب مخفيين عن أولياء الأمور لحد ما تراجع الرقم وتدوس "تم التأكد من الرقم ✅" (من القائمة تحت).</p>':''})()}<p class=mut dir=ltr>${esc(groupLink())}</p><button class=g onclick="parentGroupCopy()">🔗 نسخ لينك الجروب</button>
 <h4 style="margin:14px 0 6px">🔍 مراجعة أرقام أولياء الأمور</h4>
 ${(()=>{const a=gpAudit();return a.length?'<p class=mut>'+a.length+' طالب رقمهم محتاج مراجعة:</p>'+a.slice(0,15).map(x=>'<p class=mut style="margin:4px 0">🚨 <b>'+esc(x.s.name)+'</b>: '+esc(x.w.join(' / '))+'</p>').join(''):'<p class=mut>✅ مفيش أرقام مشكوك فيها</p>'})()}
-<h4 style="margin:14px 0 6px">👨‍👩‍👦 تأكيد أولياء الأمور</h4>
-<div class=row style="margin-bottom:6px"><span style=flex:1 class=mut>الكود بيتبعت لواتساب ولي الأمر. لما يفتح اللينك الرقم بيتأكد.</span><button class=g onclick="parentRefresh()" ${k&&sv?'':'disabled'}>🔄 تحديث</button></div>
-${(db.students||[]).slice(0,400).map(s=>{const t=pstat()[s.id]||{};return `<div class=row style="margin-bottom:8px;flex-wrap:wrap"><span style=flex:1>${esc(s.name)}<br>${pBadge(s)}<br><small class=mut>${t.devices?'مربوط على '+t.devices+' جهاز':t.code?'الكود مستني ولي الأمر':''}${rv[s.id]?' · ⛔ موقوف':''}</small></span><button class=g onclick="parentSendCode('${s.id}')" ${k&&sv?'':'disabled'}>📲 إرسال كود</button><button class=g onclick="parentReset('${s.id}')" ${k&&sv?'':'disabled'}>🔄 إعادة</button><button class=g onclick="parentRevoke('${s.id}')" ${k&&sv?'':'disabled'}>${rv[s.id]?'✅ تفعيل':'⛔ إيقاف'}</button></div>`}).join('')||'<p class=mut>لا يوجد طلاب</p>'}</div>`};
+<h4 style="margin:14px 0 6px">👨‍👩‍👦 أرقام أولياء الأمور</h4>
+<div class=row style="margin-bottom:6px"><span style=flex:1 class=mut>بعد ما تكلم ولي الأمر وتتأكد من الرقم دوس "تم التأكد ✅" (بيتحدث تلقائياً).</span></div>
+${(db.students||[]).slice(0,400).map(s=>`<div class=row style="margin-bottom:8px;flex-wrap:wrap"><span style=flex:1>${esc(s.name)}<br>${pBadge(s)}<br><small class=mut>${notViewable(s)?'⛔ مش هيظهر لولي الأمر لحد ما تصحح الرقم وتدوس تم التأكد':''}${rv[s.id]?' · ⛔ موقوف':''}</small></span><button class=g onclick="pVerify('${s.id}')">${pver()[s.id]&&pver()[s.id]===s.gphone?'↩️ إلغاء التأكيد':'✅ تم التأكد من الرقم'}</button><button class=g onclick="parentRevoke('${s.id}')" ${k&&sv?'':'disabled'}>${rv[s.id]?'✅ تفعيل':'⛔ إيقاف'}</button></div>`).join('')||'<p class=mut>لا يوجد طلاب</p>'}</div>`};
 window.parentBackup=async function(){const c=cnt();let str;try{const o=Object.assign({},db,{_meta:{app:'apex',at:Date.now(),n:db.students.length,g:db.groups.length}});str=JSON.stringify(o);JSON.parse(str)}catch(e){return msg('❌ فشل التحقق من النسخة، مفيش ملف اتحفظ')}
  const fn='apex-backup-'+today()+'.json',sum=c.st+' طالب و'+c.se+' حصة و'+c.g+' درجة و'+c.n+' ملاحظة';window.__bkStr=str;
  try{const f=new File([str],fn,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'نسخة Apex'});db._lastExp=Date.now();save();return msg('✅ تم فتح المشاركة: اختار حفظ في Drive أو الملفات أو ابعتها لنفسك. النسخة فيها '+sum)}}catch(e){if(e&&e.name==='AbortError')return msg('اتلغت المشاركة. مفيش ملف اتحفظ.')}
@@ -2977,7 +2978,7 @@ window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ �
 window.parentSync=async function(){closeM();try{snap('قبل رفع بيانات أولياء الأمور')}catch(e){}const p=payload();msg('⏳ جاري الرفع...');
  try{const r=await api('/admin/sync','POST',{students:p.students,replace:true});if(!r.j.ok)return msg('❌ فشل الرفع'+(r.status===401?' (الجهاز مش متفعّل أو مقفول مؤقتاً)':''));
   const c=r.j,bad=['students','sessions','grades','homework','notes'].filter(k=>c[k]!==p.t[k]);
-  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة')}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
+  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة'+(c.students>c.eligible?' | ⏸️ '+(c.students-c.eligible)+' طالب مخفيين عن أولياء الأمور لحد ما تأكد أرقامهم':''))}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.parentRevoke=async function(id){const rv=rev(),to=!!rv[id];try{const r=await api('/admin/revoke','POST',{id,active:to});if(r.j.ok&&r.j.changed){if(to)delete rv[id];else rv[id]=1;LS('prev',JSON.stringify(rv));render()}else msg('❌ الطالب مش مرفوع على السيرفر (اعمل رفع الأول)')}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.__parentPayload=payload;
 /* تفعيل الجهاز: لينك لمرة واحدة */

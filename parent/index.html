@@ -257,9 +257,9 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
     <div class="orn"><span></span>${I.dia}<span></span></div>
     <form class="box" id="rf" autocomplete="off" novalidate><h2>أهلاً بحضرتك</h2>
     <div class="sub">اكتب اسم ابنك ورقم موبايلك المسجل في المركز وهتشوف متابعته على طول.</div>
-    <div class="fld"><label for="nm">اسم الطالب ثلاثي</label><div class="inp">${I.user}<input id="nm" type="text" placeholder="الاسم الثلاثي كما في كشف المركز" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>
+    <div class="fld"><label for="nm">اسم الطالب ثلاثي</label><div class="inp">${I.user}<input id="nm" type="text" placeholder="مثال: أحمد محمد علي" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>
     <div class="fld"><label for="ph">رقم موبايل ولي الأمر</label><div class="inp">${I.phone}<input id="ph" type="tel" inputmode="tel" dir="ltr" style="text-align:right" placeholder="رقم موبايلك المسجل" autocomplete="off"></div></div>
-    <div id="msg"></div>
+    <div class="sub" style="font-size:12px;margin:-4px 0 8px">اكتب اسم ابنك زي ما هو مسجل في المركز (ثلاثي)، ورقم موبايلك اللي سجلته عند المدرس.</div><div id="msg"></div>
     <button class="btn" id="go" type="submit">دخول ${I.arrow}</button>
     </form>
     <div class="priv">${I.shield}<span>بياناتك محمية. مفيش أرقام بتظهر لأي حد</span></div></div>`;
@@ -268,12 +268,12 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
     f.addEventListener('submit',async e=>{
       e.preventDefault();if(go.disabled)return;
       const n=$('#nm').value,p=$('#ph').value.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
-      if(n.trim().length<3||p.replace(/\D/g,'').length<10){msg.innerHTML=`<div class="msg er" role="alert">${I.alert}<div>اكتب الاسم ورقم الموبايل كاملين.</div></div>`;return}
+      if(n.trim().length<3||p.replace(/\D/g,'').length<10){msg.innerHTML=`<div class="msg er" role="alert">${I.alert}<div>اكتب اسم ابنك ثلاثي ورقم موبايل من 11 رقم.</div></div>`;return}
       go.disabled=true;go.innerHTML='<span class="spin"></span>';msg.innerHTML='';
       let r;try{r=await ParentAPI.login(n,p)}catch(x){r={ok:false}}
       if(r.ok&&r.student){childView(r.student);return}
       go.disabled=false;go.innerHTML='دخول '+I.arrow;
-      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>محاولات كتير غلط. استنى شوية وجرّب تاني.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>الاسم أو الرقم مش مطابقين لسجل المركز. اكتب الاسم ثلاثي زي ما هو في المركز والرقم المسجل. لو لسه مش راضي يفتح كلم المدرس.</div></div>`;
+      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>محاولات كتير غلط. استنى حوالي 15 دقيقة وجرّب تاني، أو كلم المدرس.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>مش لاقيين بيانات مطابقة. اتأكد إن الاسم ثلاثي زي ما هو في المركز، وإن الرقم هو اللي سجلته عند المدرس. لو لسه مش راضي يفتح كلم المدرس.</div></div>`;
     });
   }
   async function boot(){

@@ -1,0 +1,294 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="referrer" content="no-referrer">
+<title>متابعة الطالب</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0b0f2e;--navy2:#151b4d;--ind:#2a3690;--gold:#b8924a;--gold2:#e8cb8d;--bg:#f3f1ec;--card:#fff;--tx:#161a38;--mut:#6c7290;--bd:#e7e4db;--ok:#18a37a;--bad:#d6454a;--warn:#e19a1f}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"IBM Plex Sans Arabic","Noto Sans Arabic",Tahoma,sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;max-width:480px;margin:0 auto}
+.serif{font-family:Amiri,"Noto Naskh Arabic",serif}
+svg{display:block}
+/* LOGIN */
+.lg{min-height:100vh;background:radial-gradient(120% 70% at 50% -10%,#2a3690 0,#151b4d 45%,#0b0f2e 100%);position:relative;overflow:hidden;padding:56px 22px 28px;display:flex;flex-direction:column;align-items:center}
+.lg:before{content:"";position:absolute;inset:0;background:
+ repeating-linear-gradient(45deg,rgba(232,203,141,.045) 0 1px,transparent 1px 22px),repeating-linear-gradient(-45deg,rgba(232,203,141,.045) 0 1px,transparent 1px 22px);mask-image:linear-gradient(#000,transparent 70%)}
+.glow{position:absolute;width:360px;height:360px;border-radius:50%;background:radial-gradient(circle,rgba(232,203,141,.22),transparent 65%);top:-120px;left:50%;transform:translateX(-50%)}
+.emb{position:relative;width:92px;height:92px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#f4dca3,#b8924a 55%,#8d6a2c);box-shadow:0 14px 40px -8px rgba(232,203,141,.45),inset 0 1px 0 rgba(255,255,255,.6)}
+.emb i{position:absolute;inset:5px;border-radius:50%;border:1.5px solid rgba(11,15,46,.55)}
+.emb b{font-family:Amiri,serif;font-size:46px;color:#0b0f2e;line-height:1;margin-top:-6px}
+.brand{position:relative;margin-top:18px;text-align:center;color:#fff}
+.brand h1{font-family:Amiri,serif;font-weight:700;font-size:30px;letter-spacing:.3px}
+.brand p{margin-top:6px;font-size:13px;color:var(--gold2);letter-spacing:.5px}
+.orn{display:flex;align-items:center;gap:10px;margin-top:14px;position:relative}
+.orn span{width:56px;height:1px;background:linear-gradient(90deg,transparent,var(--gold2))}
+.orn span:last-child{transform:scaleX(-1)}
+.orn svg{width:10px;height:10px}
+.box{position:relative;width:100%;margin-top:30px;border-radius:26px;padding:26px 20px 22px;background:linear-gradient(160deg,rgba(255,255,255,.14),rgba(255,255,255,.05));border:1px solid rgba(232,203,141,.28);backdrop-filter:blur(14px);box-shadow:0 30px 60px -20px rgba(0,0,0,.6),inset 0 1px 0 rgba(255,255,255,.18)}
+.box h2{color:#fff;font-size:19px;font-weight:600;text-align:center}
+.box .sub{color:rgba(255,255,255,.66);font-size:12.5px;text-align:center;margin-top:6px;line-height:1.7}
+.fld{margin-top:16px}
+.fld label{display:block;color:var(--gold2);font-size:12px;font-weight:500;margin-bottom:7px}
+.inp{display:flex;align-items:center;gap:10px;height:52px;border-radius:15px;padding:0 14px;background:rgba(7,10,32,.55);border:1px solid rgba(255,255,255,.14);color:#fff;font-size:15px}
+.inp svg{width:19px;height:19px;flex:none;stroke:var(--gold2);fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.inp .v{flex:1}.inp .ph{color:rgba(255,255,255,.38)}
+.inp.f{border-color:var(--gold2);box-shadow:0 0 0 4px rgba(232,203,141,.16)}
+.inp.e{border-color:#ff8a8f}
+.btn{margin-top:22px;width:100%;height:54px;border-radius:16px;border:0;font:600 16px "IBM Plex Sans Arabic";color:#0b0f2e;background:linear-gradient(135deg,#f7e3b0,#d9b46a 50%,#b8924a);box-shadow:0 12px 26px -8px rgba(232,203,141,.5),inset 0 1px 0 rgba(255,255,255,.7);display:flex;align-items:center;justify-content:center;gap:10px}
+.btn.dis{opacity:.45;filter:grayscale(.4)}
+.msg{margin-top:14px;border-radius:13px;padding:11px 13px;font-size:12.5px;line-height:1.7;display:flex;gap:9px;align-items:flex-start}
+.msg.er{background:rgba(255,120,125,.14);border:1px solid rgba(255,138,143,.4);color:#ffd3d5}
+.msg.lk{background:rgba(232,203,141,.12);border:1px solid rgba(232,203,141,.4);color:#f6e6c0}
+.msg svg{width:17px;height:17px;flex:none;margin-top:2px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round}
+.cnt{font-variant-numeric:tabular-nums;font-weight:700;font-size:15px;letter-spacing:1px}
+.priv{position:relative;margin-top:auto;padding-top:26px;color:rgba(255,255,255,.5);font-size:11.5px;text-align:center;line-height:1.8;display:flex;gap:7px;align-items:center;justify-content:center}
+.priv svg{width:14px;height:14px;stroke:var(--gold2);fill:none;stroke-width:1.6}
+/* CHILD */
+.hd{background:radial-gradient(120% 90% at 50% -20%,#2a3690 0,#151b4d 50%,#0b0f2e 100%);color:#fff;padding:34px 18px 78px;position:relative;overflow:hidden;border-radius:0 0 34px 34px}
+.hd:before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(45deg,rgba(232,203,141,.045) 0 1px,transparent 1px 22px),repeating-linear-gradient(-45deg,rgba(232,203,141,.045) 0 1px,transparent 1px 22px)}
+.top{position:relative;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--gold2)}
+.top .lg2{display:flex;align-items:center;gap:8px;font-family:Amiri,serif;font-size:17px;color:#fff}
+.top .lg2 u{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;text-decoration:none;background:linear-gradient(145deg,#f4dca3,#b8924a);color:#0b0f2e;font-size:16px;font-weight:700;padding-bottom:3px}
+.out{border:1px solid rgba(232,203,141,.4);border-radius:20px;padding:5px 12px;font-size:11.5px}
+.who{position:relative;margin-top:22px;display:flex;gap:15px;align-items:center}
+.av{width:74px;height:74px;border-radius:50%;flex:none;display:grid;place-items:center;font-family:Amiri,serif;font-size:34px;font-weight:700;color:#0b0f2e;background:linear-gradient(145deg,#f7e3b0,#b8924a);box-shadow:0 0 0 4px rgba(232,203,141,.22),0 14px 28px -10px #000}
+.who h1{font-family:Amiri,serif;font-size:24px;line-height:1.35}
+.chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.chip{font-size:11.5px;padding:4px 11px;border-radius:20px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#f4ecd6}
+.chip.g{background:rgba(232,203,141,.16);border-color:rgba(232,203,141,.45);color:var(--gold2)}
+.main{margin-top:-52px;padding:0 14px 26px;position:relative}
+.card{background:var(--card);border-radius:22px;padding:18px 16px;box-shadow:0 1px 2px rgba(25,32,90,.05),0 16px 34px -18px rgba(25,32,90,.3);border:1px solid #efece3;margin-bottom:14px}
+.card h3{font-size:15px;font-weight:600;display:flex;align-items:center;gap:9px;margin-bottom:14px}
+.card h3 i{width:30px;height:30px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(145deg,#fbf3df,#f1e0b4);flex:none}
+.card h3 i svg{width:16px;height:16px;stroke:#8d6a2c;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.card h3 small{margin-inline-start:auto;font-size:11.5px;color:var(--mut);font-weight:400}
+.sum{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.kp{display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:112px;border-radius:17px;padding:14px 8px 12px;text-align:center;background:#faf8f3;border:1px solid var(--bd)}
+.kp .n{font-family:Amiri,serif;font-size:29px;font-weight:700;line-height:1.1}
+.kp .l{font-size:11.5px;color:var(--mut);margin-top:4px}
+.ring{position:relative;width:64px;height:64px;margin:0 auto 6px}
+.ring svg{transform:rotate(90deg) scaleX(-1)}
+.ring b{position:absolute;inset:0;display:grid;place-items:center;font-family:Amiri,serif;font-size:19px}
+.lvl{margin-top:12px;display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#0f1546,#222d7d);color:#fff;border-radius:16px;padding:12px 14px}
+.lvl svg{width:26px;height:26px;fill:var(--gold2);flex:none}
+.lvl p{font-size:12.5px;line-height:1.7;color:#e8e9fb}.lvl b{color:var(--gold2)}
+.tl{position:relative;padding-inline-start:4px}
+.row{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--bd)}
+.row:last-child{border:0}
+.dt{width:42px;text-align:center;flex:none}
+.dt b{display:block;font-family:Amiri,serif;font-size:20px;line-height:1}
+.dt span{font-size:10.5px;color:var(--mut)}
+.row .m{flex:1;font-size:13.5px;font-weight:500}
+.row .m small{display:block;color:var(--mut);font-weight:400;font-size:11.5px;margin-top:2px}
+.pill{font-size:11.5px;font-weight:600;padding:4px 11px;border-radius:20px}
+.p-ok{background:#e3f6ef;color:#0e7e5c}.p-bad{background:#fde8e8;color:#b5333a}.p-wr{background:#fdf1db;color:#a86d0c}
+.bars{display:flex;align-items:flex-end;gap:9px;height:130px;padding:6px 2px 0;border-bottom:1px solid var(--bd)}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:11px;font-weight:600;gap:4px}
+.bar i{display:block;flex:none;width:100%;border-radius:9px 9px 3px 3px;background:linear-gradient(#4453c2,#2a3690)}
+.bar.top i{background:linear-gradient(#f0d595,#b8924a)}
+.lb{display:flex;gap:9px;margin-top:7px;font-size:10.5px;color:var(--mut)}.lb span{flex:1;text-align:center}
+.note{border-radius:16px;padding:13px 14px;background:#faf8f3;border:1px solid var(--bd);margin-bottom:10px;position:relative}
+.note:last-child{margin:0}
+.note p{font-size:13px;line-height:1.85}
+.note small{display:block;margin-top:6px;font-size:11px;color:var(--mut)}
+.note.star{background:linear-gradient(135deg,#fdf6e3,#f8ebc9);border-color:#ecd69b}
+.hw{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px dashed var(--bd);font-size:13px}
+.hw:last-child{border:0}.hw .m{flex:1}.hw small{display:block;color:var(--mut);font-size:11.5px}
+.nx{display:flex;gap:14px;align-items:center;border-radius:18px;padding:16px;background:linear-gradient(135deg,#fbf3df,#f2e1b6);border:1px solid #ecd69b}
+.nx .big{width:58px;text-align:center;background:#0b0f2e;color:#fff;border-radius:14px;padding:8px 0;flex:none}
+.nx .big b{display:block;font-family:Amiri,serif;font-size:26px;line-height:1;color:var(--gold2)}.nx .big span{font-size:10.5px}
+.nx p{font-size:13.5px;font-weight:600}.nx small{display:block;font-weight:400;color:#6b5a2c;margin-top:4px;font-size:12px}
+.ft{text-align:center;color:var(--mut);font-size:11.5px;line-height:1.9;padding:6px 10px 24px}
+.ft b{color:var(--gold);font-family:Amiri,serif;font-size:15px;font-weight:700}
+.demo{display:none;position:fixed;top:0;inset-inline:0;max-width:480px;margin:auto;z-index:9;background:#e19a1f;color:#fff;font-size:10.5px;text-align:center;padding:3px;letter-spacing:.3px}
+.gt{border-radius:18px;overflow:hidden;border:1px solid var(--bd)}
+.gh,.gr,.gf{display:grid;grid-template-columns:1.9fr 1.1fr .9fr 1fr;align-items:center;gap:6px;padding:0 12px}
+.gh{height:40px;background:linear-gradient(135deg,#0f1546,#222d7d);color:var(--gold2);font-size:11.5px;font-weight:600}
+.gr{min-height:52px;font-size:13px;border-bottom:1px solid #f0ede4}
+.gr:nth-child(even){background:#faf8f3}
+.gr .tn{font-weight:500;display:flex;align-items:center;gap:6px}.gr .d{color:var(--mut);font-size:11.5px}
+.gr .sc b{font-family:Amiri,serif;font-size:20px}.gr .sc small{color:var(--mut);font-size:10px;margin-inline-start:2px}
+.gr em{width:16px;height:16px;display:inline-block}.gr em svg{width:16px;height:16px;fill:#b8924a;stroke:none}
+.gr.best{background:linear-gradient(90deg,#fdf6e3,#f8ebc9)}.gr.best .sc b{color:#8d6a2c}
+.lv{font-style:normal;font-size:11px;font-weight:600;padding:3px 9px;border-radius:20px;display:inline-block}
+.lv.a{background:#e3f6ef;color:#0e7e5c}.lv.b{background:#e8ebfb;color:#2a3690}
+.gf{height:48px;background:#0b0f2e;color:#fff;grid-template-columns:1fr auto;font-size:13px}.gf b{font-family:Amiri,serif;font-size:22px;color:var(--gold2)}
+
+.demo.on{display:block}
+.spin{width:18px;height:18px;border-radius:50%;border:2px solid rgba(11,15,46,.25);border-top-color:#0b0f2e;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.inp input{flex:1;min-width:0;background:none;border:0;outline:0;color:#fff;font:15px "IBM Plex Sans Arabic","Noto Sans Arabic",sans-serif}
+.inp input::placeholder{color:rgba(255,255,255,.38)}
+.inp:focus-within{border-color:var(--gold2);box-shadow:0 0 0 4px rgba(232,203,141,.16)}
+.btn{cursor:pointer}.btn[disabled]{opacity:.45;filter:grayscale(.4);cursor:not-allowed}
+.out{cursor:pointer;background:none;font-family:inherit;color:var(--gold2)}
+</style></head><body>
+<div class="demo" id="demo">نموذج تجريبي - بيانات وهمية</div>
+<div id="app"></div>
+<script>/* Parent server address. Filled in at deploy time. */
+window.PARENT_SERVER='https://apex-parent-api.goo2182009.workers.dev';
+if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchParams(location.search).get('srv');if(q)window.PARENT_SERVER=q}
+</script><script>/* Real adapter. Access = one-time code (sent by the teacher to the parent's WhatsApp) -> this phone gets a private device token.
+   The server enforces lockout, hashing and visibility. */
+(function(){
+  const SRV=(window.PARENT_SERVER||'').replace(/\/$/,''),K='pp_dev';
+  const tok=()=>{try{return localStorage.getItem(K)||''}catch(e){return ''}};
+  const setTok=t=>{try{t?localStorage.setItem(K,t):localStorage.removeItem(K)}catch(e){}};
+  async function call(path,body){
+    if(!SRV)return {ok:false,locked:false};
+    try{const r=await fetch(SRV+path,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body)});
+      const j=await r.json().catch(()=>({}));
+      if(r.ok&&j.ok)return j;
+      if(r.status===429||j.locked)return {ok:false,locked:true,retryAfterSec:Number(j.retryAfterSec||900)};
+      return {ok:false,locked:false,status:r.status};
+    }catch(e){return {ok:false,locked:false,offline:true}}
+  }
+  window.ParentAPI={isFake:false,
+    hasDevice:()=>!!tok(),
+    async request(name,phone){const j=await call('/request-access',{name,phone});return j.ok?{ok:true}:j},
+    async claim(code){const j=await call('/claim-code',{code});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
+    async open(){const t=tok();if(!t)return {ok:false,locked:false};const j=await call('/view',{token:t});if(j.ok)return {ok:true,student:j.student};if(j.status===401)setTok('');return j},
+    async logout(){const t=tok();setTok('');if(t)await call('/logout',{token:t})}
+  };
+})();
+</script><script>(function(){
+  const $=s=>document.querySelector(s);
+  const app=$('#app');
+  const AR=n=>n==null?'':String(n).replace(/\d/g,d=>'٠١٢٣٤٥٦٧٨٩'[d]);
+  const MONTHS=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const DAYS=['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const dm=iso=>{const d=new Date(iso+'T12:00:00');return {d:AR(d.getDate()),m:MONTHS[d.getMonth()],w:DAYS[d.getDay()]}};
+  const I={user:'<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-4.5 4.2-6 8-6s7 1.5 8 6"/></svg>',
+  phone:'<svg viewBox="0 0 24 24"><rect x="6" y="2.5" width="12" height="19" rx="3"/><path d="M11 18.5h2"/></svg>',
+  lock:'<svg viewBox="0 0 24 24"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>',
+  alert:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.5M12 16.5h.01"/></svg>',
+  cal:'<svg viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="3"/><path d="M8 3v4M16 3v4M3.5 10h17"/></svg>',
+  chart:'<svg viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3"/></svg>',
+  book:'<svg viewBox="0 0 24 24"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h10"/></svg>',
+  chat:'<svg viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg>',
+  clock:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  dia:'<svg viewBox="0 0 10 10"><path d="M5 0l5 5-5 5-5-5z" fill="#e8cb8d"/></svg>',
+  arrow:'<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#0b0f2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  shield:'<svg viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg>',
+  star:'<svg viewBox="0 0 24 24"><path d="M12 2l3 6.5 7 .8-5.2 4.8 1.5 7L12 17.5 5.7 21l1.5-7L2 9.3l7-.8z"/></svg>',
+  cap:'<svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#0b0f2e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11.5V16c0 1.5 2.7 3 6 3s6-1.5 6-3v-4.5"/><path d="M22 9v6"/></svg>'};
+  if(window.ParentAPI&&ParentAPI.isFake)$('#demo').classList.add('on');
+  let lockTimer=null;
+  function mmss(s){return AR(String(Math.floor(s/60)).padStart(2,'0'))+':'+AR(String(s%60).padStart(2,'0'))}
+  function loginView(state){
+    state=state||{};
+    app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:14px"></div>
+    <div class="emb"><i></i>${I.cap}</div>
+    <div class="brand"><h1 style="font-weight:400;font-size:27px;line-height:1.5">متابعة مستوى ابنك<br><span style="color:var(--gold2)">لحظة بلحظة</span></h1></div>
+    <div class="orn"><span></span>${I.dia}<span></span></div>
+    <form class="box" id="f" autocomplete="off" novalidate><h2>أهلاً بحضرتك</h2>
+    <div class="sub">افتح اللينك اللي وصلك من المدرس على واتساب،<br>أو اكتب الكود اللي فيه لأول مرة بس</div>
+    <div class="fld"><label for="cd">كود الدخول</label><div class="inp ${state.err?'e':''}">${I.shield}<input id="cd" name="c" type="text" dir="ltr" style="text-align:right;letter-spacing:2px;text-transform:uppercase" placeholder="الكود اللي وصلك على واتساب" autocomplete="off" autocapitalize="characters" spellcheck="false"></div></div>
+    <div id="msg"></div>
+    <button class="btn" id="go" type="submit">عرض صفحة الطالب ${I.arrow}</button></form>
+    <div class="priv" style="margin-bottom:10px"><a href="#request" id="rq" style="color:var(--gold2);text-decoration:underline">مفيش معايا كود؟ اطلب كود دخول</a></div><div class="priv">${I.shield}<span>صفحة للقراءة فقط. بياناتك محمية ومش بتظهر لأي حد تاني</span></div></div>`;
+    $('#rq').onclick=e=>{e.preventDefault();requestView()};
+    const f=$('#f'), msg=$('#msg'), go=$('#go');
+    function showErr(){msg.innerHTML=`<div class="msg er" role="alert">${I.alert}<div>الكود غير صحيح أو انتهى. اطلب من المدرس كود جديد.</div></div>`;f.querySelectorAll('.inp').forEach(e=>e.classList.add('e'))}
+    function showLock(sec){
+      f.querySelectorAll('.inp').forEach(e=>e.classList.remove('e'));go.disabled=true;go.innerHTML='متاح بعد قليل';
+      clearInterval(lockTimer);
+      const end=Date.now()+sec*1000;
+      const tick=()=>{const left=Math.max(0,Math.ceil((end-Date.now())/1000));
+        if(!left){clearInterval(lockTimer);msg.innerHTML='';go.disabled=false;go.innerHTML='عرض صفحة الطالب '+I.arrow;return}
+        msg.innerHTML=`<div class="msg lk" role="alert">${I.lock}<div>تم إيقاف المحاولات مؤقتاً حفاظاً على خصوصية الطلاب.<br>جرّب مرة أخرى بعد <span class="cnt">${mmss(left)}</span> دقيقة.</div></div>`};
+      tick();lockTimer=setInterval(tick,1000)}
+    f.addEventListener('submit',async e=>{
+      e.preventDefault();if(go.disabled)return;
+      const cd=$('#cd').value;
+      if(!cd.trim()){showErr();return}
+      go.disabled=true;go.innerHTML='<span class="spin"></span>';msg.innerHTML='';
+      let r;try{r=await ParentAPI.claim(cd)}catch(x){r={ok:false,locked:false}}
+      if(r.ok){childView(r.student);window.scrollTo(0,0);return}
+      go.disabled=false;go.innerHTML='عرض صفحة الطالب '+I.arrow;
+      if(r.locked)showLock(r.retryAfterSec||900);else showErr();
+    });
+    if(state.lock)showLock(state.lock);
+    if(state.err)showErr();
+  }
+  const rate=g=>g>=90?'a':'b';
+  const ST={present:['حضر','p-ok'],absent:['غاب','p-bad'],late:['تأخر','p-wr']};
+  const HW={done:['تم التسليم','p-ok'],partial:['ناقص جزء','p-wr'],missing:['لم يُسلّم','p-bad']};
+  function card(icon,title,small,body){return `<div class="card"><h3><i>${icon}</i>${title}${small?`<small>${small}</small>`:''}</h3>${body}</div>`}
+  function childView(s){
+    const sh=s.show||{},sm=s.summary||{};
+    const R=27,C=2*Math.PI*R;
+    const first=(s.name||'').trim().charAt(0);
+    let out=`<div class="hd"><div class="top"><div class="lg2"><u>A</u>Apex Center</div><button class="out" id="lo" type="button">خروج</button></div>
+    <div class="who"><div class="av">${esc(first)}</div><div><h1>${esc(s.name)}</h1><div class="chips"><span class="chip g">${esc(s.grade)}</span><span class="chip">${esc(s.group)}</span></div></div></div></div><div class="main">`;
+    if(sh.summary){
+      out+=card(I.star,'ملخص الشهر','',`<div class="sum">
+      <div class="kp"><div class="ring"><svg width="64" height="64"><circle cx="32" cy="32" r="${R}" fill="none" stroke="#ece6d6" stroke-width="6"/><circle cx="32" cy="32" r="${R}" fill="none" stroke="#18a37a" stroke-width="6" stroke-linecap="round" stroke-dasharray="${C*sm.attendancePct/100} ${C}"/></svg><b dir="ltr">${AR(sm.attendancePct)}٪</b></div><div class="l">نسبة الحضور</div></div>
+      <div class="kp"><div class="n" style="color:#2a3690">${sm.avg==null?'-':AR(sm.avg)}</div><div class="l">متوسط الدرجات</div></div>
+      <div class="kp"><div class="n" style="color:#b8924a">${AR(sm.hwDone)}/${AR(sm.hwTotal)}</div><div class="l">الواجبات المسلّمة</div></div></div>
+      ${sm.level?`<div class="lvl">${I.star}<p>مستوى <b>${esc(sm.level)}</b> هذا الشهر.${sm.best?` أعلى درجة وصلت لها <b>${AR(sm.best)}</b> في ${esc(sm.bestTest)}.`:''}</p></div>`:''}`)}
+    if(sh.attendance&&s.sessions.length){
+      out+=card(I.cal,'سجل الحضور',`آخر ${AR(s.sessions.length)} حصص`,'<div class="tl">'+s.sessions.map(x=>{const d=dm(x.date),t=ST[x.status]||ST.present;
+        return `<div class="row"><div class="dt"><b>${d.d}</b><span>${d.m}</span></div><div class="m">${AR(esc(x.title))}${x.topic?`<small>${esc(x.topic)}</small>`:''}</div><span class="pill ${t[1]}">${t[0]}</span></div>`}).join('')+'</div>')}
+    if(sh.grades&&s.grades.length){
+      const best=Math.max(...s.grades.map(g=>g.score));
+      out+=card(I.chart,'الدرجات والاختبارات',`آخر ${AR(s.grades.length)} اختبارات`,`<div class="gt"><div class="gh"><span>الاختبار</span><span>التاريخ</span><span>الدرجة</span><span>التقدير</span></div>`+
+      s.grades.map(g=>{const d=dm(g.date);return `<div class="gr ${g.score===best?'best':''}"><span class="tn">${g.score===best?'<em>'+I.star+'</em>':''}${esc(g.test)}</span><span class="d">${d.d} ${d.m}</span><span class="sc"><b>${AR(g.score)}</b><small>/${AR(g.max)}</small></span><span><i class="lv ${rate(g.max?g.score/g.max*100:g.score)}">${esc(g.rating)}</i></span></div>`}).join('')+
+      `<div class="gf"><span>المتوسط العام</span><b>${AR(sm.avg)}</b></div></div>`)}
+    if(sh.homework&&s.homework.length){
+      out+=card(I.book,'الواجبات','',s.homework.map(h=>{const d=dm(h.date),t=HW[h.status]||HW.done;return `<div class="hw"><div class="m">${esc(h.title)}<small>${d.d} ${d.m}</small></div><span class="pill ${t[1]}">${t[0]}</span></div>`}).join(''))}
+    if(sh.notes&&s.notes.length){
+      out+=card(I.chat,'ملاحظات المدرس','',s.notes.map(n=>{const d=dm(n.date);return `<div class="note ${n.star?'star':''}"><p>${esc(n.text)}</p><small>${d.d} ${d.m}</small></div>`}).join(''))}
+    if(sh.next&&s.next){
+      const d=dm(s.next.date);
+      out+=card(I.clock,'الحصة القادمة','',`<div class="nx"><div class="big"><b>${d.d}</b><span>${d.m}</span></div><div><p>${esc(s.next.topic)}</p><small>${d.w}، ${AR(esc(s.next.time))}</small></div></div>`)}
+    out+=`<div class="ft"><b>Apex Center</b><br>هذه الصفحة للقراءة فقط. لأي استفسار تواصل مع المدرس.</div></div>`;
+    app.innerHTML=out;
+    $('#lo').onclick=async()=>{if(confirm('هتخرج من الجهاز ده وهتحتاج كود جديد من المدرس عشان تدخل تاني. متأكد؟')){await ParentAPI.logout();loginView()}};
+  }
+  function requestView(state){
+    state=state||{};
+    app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:14px"></div>
+    <div class="emb"><i></i>${I.cap}</div>
+    <div class="brand"><h1 style="font-weight:400;font-size:27px;line-height:1.5">طلب كود الدخول<br><span style="color:var(--gold2)">لمتابعة ابنك</span></h1></div>
+    <div class="orn"><span></span>${I.dia}<span></span></div>
+    <form class="box" id="rf" autocomplete="off" novalidate><h2>أهلاً بحضرتك</h2>
+    <div class="sub">اكتب اسم الطالب ورقم موبايلك المسجل في المركز.<br>لو البيانات مطابقة هيوصلك كود على واتساب من المدرس.</div>
+    <div class="fld"><label for="nm">اسم الطالب ثلاثي</label><div class="inp">${I.user}<input id="nm" type="text" placeholder="الاسم الثلاثي كما في كشف المركز" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>
+    <div class="fld"><label for="ph">رقم موبايل ولي الأمر</label><div class="inp">${I.phone}<input id="ph" type="tel" inputmode="tel" dir="ltr" style="text-align:right" placeholder="رقم موبايلك المسجل" autocomplete="off"></div></div>
+    <div id="msg"></div>
+    <button class="btn" id="go" type="submit">اطلب الكود ${I.arrow}</button>
+    <div class="priv" style="margin-top:12px"><a href="#" id="bk" style="color:var(--gold2);text-decoration:underline">عندي كود</a></div></form>
+    <div class="priv">${I.shield}<span>الكود بيتبعت على واتساب لرقم ولي الأمر المسجل في المركز بس</span></div></div>`;
+    $('#bk').onclick=e=>{e.preventDefault();loginView()};
+    const f=$('#rf'),msg=$('#msg'),go=$('#go');
+    f.addEventListener('submit',async e=>{
+      e.preventDefault();if(go.disabled)return;
+      const n=$('#nm').value,p=$('#ph').value.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+      if(n.trim().length<3||p.replace(/\D/g,'').length<10){msg.innerHTML=`<div class="msg er" role="alert">${I.alert}<div>اكتب الاسم ورقم الموبايل كاملين.</div></div>`;return}
+      go.disabled=true;go.innerHTML='<span class="spin"></span>';msg.innerHTML='';
+      let r;try{r=await ParentAPI.request(n,p)}catch(x){r={ok:false}}
+      if(r.ok){app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:30px"></div><div class="emb"><i></i>${I.cap}</div><div class="box"><h2>تم استلام طلبك</h2><div class="sub" style="line-height:2">لو البيانات مطابقة لسجل المركز،<br>هيوصلك كود على واتساب من المدرس في أقرب وقت.<br><br>أول ما يوصلك اللينك افتحه على موبايلك.</div></div><div class="priv">${I.shield}<span>الكود بيتبعت لرقم ولي الأمر المسجل في المركز بس</span></div></div>`;return}
+      go.disabled=false;go.innerHTML='اطلب الكود '+I.arrow;
+      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>تم إيقاف المحاولات مؤقتاً. جرّب بعد قليل.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>تعذّر إرسال الطلب. تأكد من الإنترنت وحاول تاني.</div></div>`;
+    });
+  }
+  async function boot(){
+    if(location.hash==='#request'&&!(ParentAPI.hasDevice&&ParentAPI.hasDevice())){requestView();return}
+    const m=/^#c=([A-Za-z0-9-]{8,40})$/.exec(location.hash||'');
+    if(m){history.replaceState(null,'',location.pathname+location.search);
+      app.innerHTML='<div class="lg"><div style="height:120px"></div><div class="brand"><h1 style="font-weight:400;font-size:22px">جاري التحقق...</h1></div></div>';
+      const r=await ParentAPI.claim(m[1]);if(r.ok){childView(r.student);return}
+      loginView(r.locked?{lock:r.retryAfterSec||900}:{err:1});return}
+    if(ParentAPI.hasDevice&&ParentAPI.hasDevice()){
+      app.innerHTML='<div class="lg"><div style="height:120px"></div><div class="brand"><h1 style="font-weight:400;font-size:22px">جاري التحميل...</h1></div></div>';
+      const r=await ParentAPI.open();if(r.ok){childView(r.student);return}
+      if(r.offline){app.innerHTML='<div class="lg"><div style="height:120px"></div><div class="brand"><h1 style="font-weight:400;font-size:20px">مفيش اتصال بالإنترنت<br>جرّب تاني</h1></div></div>';return}}
+    loginView();
+  }
+  boot();
+})();
+</script>
+</body></html>

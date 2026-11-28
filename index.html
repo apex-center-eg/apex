@@ -2935,6 +2935,18 @@ window.gpWarn=gpWarn;window.pBadge=function(s){const ok=(pconf()[s.id]&&pconf()[
 const groupLink=()=>(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';
 function pending(){const st=pstat();return (db.students||[]).filter(s=>st[s.id]&&st[s.id].req>0&&st[s.id].active!==0&&!(window.__sentNow||{})[s.id]).sort((a,b)=>st[a.id].req-st[b.id].req).map(s=>({id:s.id,name:s.name}))}
 window.parentCallCopy=async function(){const n=(db.students||[]).filter(notViewable);const t=n.map(x=>x.name+' - '+(x.gphone||'بدون رقم')).join('\n');try{await navigator.clipboard.writeText(t);msg('✅ اتنسخت قايمة '+n.length+' طالب')}catch(e){msg('❌ النسخ مش مسموح هنا')}};
+const pvs=()=>{try{return JSON.parse(LS('pviews')||'{}')}catch(e){return{}}};
+const hsh=x=>{let h=5381;for(let i=0;i<x.length;i++)h=((h<<5)+h+x.charCodeAt(i))|0;return h};
+const stuSig=s=>hsh(JSON.stringify(viewOf(s))+'|'+(s.gphone||'')+'|'+(notViewable(s)?1:0)+'|'+(s.name||''));
+const pvAll=()=>{const o={};(db.students||[]).filter(s=>s.id&&s.name).forEach(s=>o[s.id]=stuSig(s));return o};
+window.__pa=window.__pa||{t:null,busy:false,last:db._t};
+async function parentAuto(){const pa=window.__pa;if(pa.busy||!key()||!srv()||!LS('plast')||navigator.onLine===false)return;
+ const old=pvs();const ch=(db.students||[]).filter(s=>s.id&&s.name&&old[s.id]!==stuSig(s));if(!ch.length)return;pa.busy=true;
+ try{const r=await api('/admin/sync','POST',{students:ch.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,view:viewOf(s)})),replace:false});
+  if(r.j&&r.j.ok){const o=pvs();ch.forEach(s=>o[s.id]=stuSig(s));LS('pviews',JSON.stringify(o));LS('plast',String(Date.now()));LS('psig',psig());LS('pauto',JSON.stringify({t:Date.now(),n:ch.length,pushed:r.j.pushed||0,notified:r.j.notified||0}))}}catch(e){}
+ pa.busy=false}
+window.parentAuto=parentAuto;
+if(!window.__paOn){window.__paOn=1;setInterval(()=>{const pa=window.__pa;if(db._t!==pa.last){pa.last=db._t;clearTimeout(pa.t);pa.t=setTimeout(parentAuto,2500)}},1000);setInterval(parentAuto,60000);addEventListener('online',()=>setTimeout(parentAuto,1500));document.addEventListener('visibilitychange',()=>{if(!document.hidden)parentAuto()})}
 window.parentGroupCopy=async function(){try{await navigator.clipboard.writeText(groupLink());msg('✅ اتنسخ لينك الجروب')}catch(e){msg(groupLink())}};
 window.parentSendNext=function(){const ps=pending();if(!ps.length)return msg('مفيش طلبات');window.__sentNow=window.__sentNow||{};window.__sentNow[ps[0].id]=1;parentSendCode(ps[0].id)};
 function gpAudit(){const out=[];(db.students||[]).forEach(s=>{const w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/طبيعي لو إخوات/.test(x));if(w.length)out.push({s,w})});return out}
@@ -2962,7 +2974,7 @@ window.parentCard=function(){if(key()&&srv()&&Date.now()-(+LS('pstat_t')||0)>600
 <input id=psrv placeholder="عنوان السيرفر" value="${esc(sv)}" onchange="parentSrv(this.value)" style="direction:ltr">
 <div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button></div>
 <p class=mut id=parmsg>${sv?'':'⏸️ الرفع متوقف لحد ما السيرفر يتفعّل. مفيش حاجة بتتبعت دلوقتي.'}</p>
-${(()=>{const t=+LS('plast')||0;if(!t)return '<p class=mut style="color:#d97706">⏳ لسه ما رفعتش بيانات لأولياء الأمور.</p>';const ch=LS('psig')!==psig();return '<p class=mut>🕒 آخر رفع: '+agoTxt(t)+'</p>'+(ch?'<p class=mut style="color:#d97706">🔔 فيه تغييرات من آخر رفع (حصص أو درجات أو ملاحظات). دوس "حدّث بيانات أولياء الأمور" عشان تظهر لهم.</p>':'<p class=mut>✅ الكل متحدّث</p>')})()}
+${(()=>{const t=+LS('plast')||0;if(!t)return '<p class=mut style="color:#d97706">⏳ لسه ما رفعتش بيانات لأولياء الأمور.</p>';const ch=LS('psig')!==psig();return '<p class=mut>🕒 آخر رفع: '+agoTxt(t)+'</p><p class=mut>⚡ بعد الرفع الأول، أي حضور أو غياب أو تأخير أو واجب أو درجة بتسجلها بتروح لولي الأمر لوحدها في ثواني (من غير ما تدوس رفع). لو مفيش نت بتتبعت أول ما النت يرجع.</p>'+(ch?'<p class=mut style="color:#d97706">🔔 فيه تغييرات من آخر رفع (حصص أو درجات أو ملاحظات). دوس "حدّث بيانات أولياء الأمور" عشان تظهر لهم.</p>':'<p class=mut>✅ الكل متحدّث</p>')})()}
 <h4 style="margin:14px 0 6px">🔗 لينك جروب أولياء الأمور</h4>
 <p class=mut>ولي الأمر يفتح اللينك ويكتب اسم ابنه ورقم موبايله ويشوف المتابعة. مفيش أكواد.</p>${(()=>{const n=(db.students||[]).filter(notViewable);return n.length?'<p class=mut style="color:#e5484d">⏸️ '+n.length+' طالب مخفيين عن أولياء الأمور لحد ما تراجع الرقم وتدوس "تم التأكد من الرقم ✅" (من القائمة تحت).</p>':''})()}<p class=mut dir=ltr>${esc(groupLink())}</p><button class=g onclick="parentGroupCopy()">🔗 نسخ لينك الجروب</button>
 <h4 style="margin:14px 0 6px">🔍 مراجعة أرقام أولياء الأمور</h4>
@@ -2983,7 +2995,7 @@ window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ �
 window.parentSync=async function(){closeM();try{snap('قبل رفع بيانات أولياء الأمور')}catch(e){}const p=payload();msg('⏳ جاري الرفع...');
  try{const r=await api('/admin/sync','POST',{students:p.students,replace:true});if(!r.j.ok)return msg('❌ فشل الرفع'+(r.status===401?' (الجهاز مش متفعّل أو مقفول مؤقتاً)':''));
   const c=r.j,bad=['students','sessions','grades','homework','notes'].filter(k=>c[k]!==p.t[k]);
-  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة'+(c.students>c.eligible?' | ⏸️ '+(c.students-c.eligible)+' طالب مخفيين عن أولياء الأمور لحد ما تأكد أرقامهم':''));if(!bad.length){LS('plast',String(Date.now()));LS('psig',psig())}if(page==='tools'){const m=($('#parmsg')||{}).innerHTML;render();const e=$('#parmsg');if(e&&m)e.innerHTML=m}}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
+  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة'+(c.students>c.eligible?' | ⏸️ '+(c.students-c.eligible)+' طالب مخفيين عن أولياء الأمور لحد ما تأكد أرقامهم':''));if(!bad.length){LS('plast',String(Date.now()));LS('psig',psig());LS('pviews',JSON.stringify(pvAll()))}if(page==='tools'){const m=($('#parmsg')||{}).innerHTML;render();const e=$('#parmsg');if(e&&m)e.innerHTML=m}}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.parentRevoke=async function(id){const rv=rev(),to=!!rv[id];try{const r=await api('/admin/revoke','POST',{id,active:to});if(r.j.ok&&r.j.changed){if(to)delete rv[id];else rv[id]=1;LS('prev',JSON.stringify(rv));render()}else msg('❌ الطالب مش مرفوع على السيرفر (اعمل رفع الأول)')}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.__parentPayload=payload;
 /* تفعيل الجهاز: لينك لمرة واحدة */

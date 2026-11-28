@@ -1,4 +1,4 @@
-<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta name="referrer" content="no-referrer">
@@ -145,13 +145,108 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
     }catch(e){return {ok:false,locked:false,offline:true}}
   }
   window.ParentAPI={isFake:false,
+    srv:()=>SRV,
     hasDevice:()=>!!tok(),
     async login(name,phone){const j=await call('/login',{name,phone});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
+    async pushKey(){try{const r=await fetch(SRV+'/vapid');const j=await r.json();return j.key||''}catch(e){return ''}},
+    async pushSub(endpoint){const j=await call('/push-sub',{token:tok(),endpoint});return {ok:!!j.ok}},
+    async pushOff(endpoint){await call('/push-off',{endpoint})},
     async request(name,phone){const j=await call('/request-access',{name,phone});return j.ok?{ok:true}:j},
     async claim(code){const j=await call('/claim-code',{code});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
     async open(){const t=tok();if(!t)return {ok:false,locked:false};const j=await call('/view',{token:t});if(j.ok)return {ok:true,student:j.student};if(j.status===401)setTok('');return j},
     async logout(){const t=tok();setTok('');if(t)await call('/logout',{token:t})}
   };
+})();
+</script>
+<script>/* تقرير الشهر PDF لولي الأمر: نفس شكل تقرير المدرس (كحلي وذهبي) من بيانات الطالب المسموحة فقط، بدون ملاحظات ولا أرقام هواتف */
+(function(){
+const fdn=d=>{const a=String(d).split('-');return (+a[2])+'/'+(+a[1])+'/'+a[0]};
+function pdfBuild(jp){const enc=new TextEncoder(),parts=[],off=[];let len=0;const P=u=>{parts.push(u);len+=u.length},S=s=>P(enc.encode(s));
+  const n=jp.length,W=595.28,H=841.89;S('%PDF-1.4\n');
+  const obj=(id,fn)=>{off[id]=len;S(id+' 0 obj\n');fn();S('endobj\n')};
+  obj(1,()=>S('<< /Type /Catalog /Pages 2 0 R >>\n'));
+  obj(2,()=>S('<< /Type /Pages /Count '+n+' /Kids ['+jp.map((_,i)=>(5+3*i)+' 0 R').join(' ')+'] >>\n'));
+  jp.forEach((p,i)=>{const im=3+3*i,ct=4+3*i,pgI=5+3*i;
+    obj(im,()=>{S('<< /Type /XObject /Subtype /Image /Width '+p.w+' /Height '+p.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.b.length+' >>\nstream\n');P(p.b);S('\nendstream\n')});
+    const cs='q '+W+' 0 0 '+H+' 0 0 cm /Im0 Do Q';
+    obj(ct,()=>S('<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream\n'));
+    obj(pgI,()=>S('<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+W+' '+H+'] /Resources << /XObject << /Im0 '+im+' 0 R >> >> /Contents '+ct+' 0 R >>\n'))});
+  const total=3*n+3,xr=len;S('xref\n0 '+total+'\n0000000000 65535 f \n');for(let i=1;i<total;i++)S(String(off[i]).padStart(10,'0')+' 00000 n \n');
+  S('trailer\n<< /Size '+total+' /Root 1 0 R >>\nstartxref\n'+xr+'\n%%EOF');return new Blob(parts,{type:'application/pdf'})}
+async function sprMake(D){
+ const W=1240,H=1754,M=88,NAVY='#14204a',GOLD='#b8924a',SOFT='#f5f6fb',LINE='#e3e7f1',INK='#2b3452',MUT='#6b7280';
+ const AR='"IBM Plex Sans Arabic","Segoe UI",Tahoma,Arial,sans-serif',SER='Amiri,"Times New Roman",Georgia,serif';
+ try{await document.fonts.load('700 120px Amiri');await document.fonts.load('600 22px "IBM Plex Sans Arabic"');await document.fonts.load('400 22px "IBM Plex Sans Arabic"');await document.fonts.load('700 22px "IBM Plex Sans Arabic"')}catch(e){}
+ const jp=[];let c,x,y,pg=0;
+ const F=(sz,w,f)=>{x.font=(w||400)+' '+sz+'px '+(f||AR)};
+ const T=(s,px,py,col,al,dir)=>{x.direction=dir||'rtl';x.fillStyle=col;x.textAlign=al||'right';x.fillText(String(s),px,py)};
+ const LS=v=>{if('letterSpacing' in x)x.letterSpacing=v};
+ const rr=(a,b,w,h,r,fill,stroke)=>{x.beginPath();if(x.roundRect)x.roundRect(a,b,w,h,r);else x.rect(a,b,w,h);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=2;x.stroke()}};
+ const orn=(cy,half)=>{x.fillStyle=GOLD;x.fillRect(W/2-half,cy-1,half-22,2);x.fillRect(W/2+22,cy-1,half-22,2);x.save();x.translate(W/2,cy);x.rotate(Math.PI/4);x.fillRect(-7,-7,14,14);x.restore()};
+ const foot=()=>{x.fillStyle=GOLD;x.fillRect(M,H-104,W-2*M,2);F(32,700,SER);T('Ms.Samar',W/2,H-52,NAVY,'center','ltr');F(22);T('صفحة '+pg,M,H-52,MUT,'left')};
+ const flush=()=>{foot();const u=c.toDataURL('image/jpeg',.93),s=atob(u.split(',')[1]),a=new Uint8Array(s.length);for(let i=0;i<s.length;i++)a[i]=s.charCodeAt(i);jp.push({w:W,h:H,b:a})};
+ const newPage=()=>{if(c)flush();c=document.createElement('canvas');c.width=W;c.height=H;x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W,H);x.textBaseline='alphabetic';pg++;
+  x.fillStyle=NAVY;x.fillRect(0,0,W,16);x.fillStyle=GOLD;x.fillRect(0,16,W,5);y=M;
+  if(pg>1){F(34,700,SER);T('Ms.Samar',M,y+34,NAVY,'left','ltr');F(24,600);T('تقرير متابعة الطالب',W-M,y+32,MUT);x.fillStyle=GOLD;x.fillRect(M,y+56,W-2*M,2);y+=100}};
+ const ensure=h=>{if(y+h>H-130){newPage();return true}return false};
+ newPage();
+ /* الترويسة */
+ y=140;F(136,700,SER);LS('3px');T('Ms.Samar',W/2,y+36,NAVY,'center','ltr');LS('0px');
+ y+=66;orn(y,220);
+ y+=52;F(28,600);LS('9px');T('STUDENT PROGRESS REPORT',W/2+5,y,GOLD,'center','ltr');LS('0px');
+ y+=70;F(58,700);T('تقرير متابعة الطالب',W/2,y,NAVY,'center');
+ y+=48;
+ /* بطاقة الطالب */
+ rr(M,y,W-2*M,222,22,SOFT);x.fillStyle=GOLD;x.fillRect(W-M-8,y+26,8,170);
+ F(24);T('اسم الطالب',W-M-40,y+52,MUT);
+ let fs=52;F(fs,700);while(x.measureText(D.name).width>W-2*M-100&&fs>28){fs-=2;F(fs,700)}T(D.name,W-M-40,y+118,NAVY);
+ x.fillStyle=LINE;x.fillRect(M+40,y+140,W-2*M-92,2);
+ F(24);T('الفترة الزمنية',W-M-40,y+190,MUT);F(30,600);T('من '+fdn(D.from)+'  إلى  '+fdn(D.to),W-M-230,y+194,INK);
+ y+=222+46;
+ const sec=(t,need)=>{ensure(need||200);rr(W-M-10,y,10,46,5,GOLD);F(42,700);T(t,W-M-32,y+38,NAVY);y+=62;x.fillStyle=LINE;x.fillRect(M,y,W-2*M,2);y+=34};
+ /* الحضور والغياب */
+ sec('الحضور والغياب');
+ ensure(190);
+ const bw=(W-2*M-2*24)/3,bx=i=>W-M-(i+1)*bw-i*24,items=[['إجمالي مرات الحضور',D.att,NAVY],['إجمالي مرات الغياب',D.a,'#a8403a'],['إجمالي مرات التأخير',D.l,'#9a7424']];
+ items.forEach((it,i)=>{rr(bx(i),y,bw,138,20,'#fff',LINE);x.fillStyle=it[2];x.fillRect(bx(i)+bw-70,y+16,48,5);F(76,700,SER);T(it[1],bx(i)+bw/2,y+84,it[2],'center','ltr');F(25,600);T(it[0],bx(i)+bw/2,y+121,INK,'center')});
+ y+=138+30;
+ F(27,700);T('تواريخ أيام الغياب',W-M,y+20,INK);y+=48;
+ if(!D.ab.length){F(26);T('لا يوجد غياب خلال هذه الفترة',W-M,y+22,'#2f7d52');y+=56}
+ else{F(25,600);let cx=W-M;const cw=d=>x.measureText(fdn(d)).width+44;
+  D.ab.forEach(d=>{const w=cw(d);if(cx-w<M){cx=W-M;y+=60}ensure(64);rr(cx-w,y,w,48,24,SOFT,LINE);T(fdn(d),cx-w/2,y+33,NAVY,'center','ltr');cx-=w+12});y+=48+20}
+ y+=14;
+ /* جدول عام */
+ const table=(cols,rows,hdrH)=>{const ws=cols.map(c=>c.w*(W-2*M)),rowH=58;
+  const hdr=()=>{let cx=W-M;cols.forEach((c,i)=>{x.fillStyle=NAVY;x.fillRect(cx-ws[i],y,ws[i],hdrH||66);F(25,700);T(c.h,cx-ws[i]/2,y+43,'#fff','center');cx-=ws[i]});y+=hdrH||66};
+  ensure(66+rowH*Math.min(2,rows.length||1)+20);hdr();
+  rows.forEach((r,ri)=>{if(y+rowH>H-130){newPage();hdr()}let cx=W-M;cols.forEach((c,i)=>{x.fillStyle=ri%2?SOFT:'#fff';x.fillRect(cx-ws[i],y,ws[i],rowH);x.strokeStyle=LINE;x.lineWidth=1.5;x.strokeRect(cx-ws[i],y,ws[i],rowH);
+    F(c.b?28:27,c.b?700:600);if(c.ltr)F(30,700,SER);T(r[i],c.al==='r'?cx-26:cx-ws[i]/2,y+43,c.col?c.col(r[i]):INK,c.al==='r'?'right':'center',c.ltr?'ltr':'rtl');cx-=ws[i]});y+=rowH});y+=30};
+ /* الواجبات */
+ sec('الواجبات',96+66+58*3+70);
+ table([{h:'حالة الواجب',w:.5,al:'r',b:1},{h:'عدد المرات',w:.5,ltr:1}],[['تم التسليم كاملاً',D.hd],['تسليم ناقص',D.hp],['لم يُسلَّم',D.hm]]);
+ if(!(D.hd+D.hp+D.hm)){F(24);T('لا توجد واجبات مسجلة خلال هذه الفترة',W-M,y,MUT);y+=40}
+ y+=10;
+ /* الامتحانات */
+ sec('درجات الامتحانات',96+66+58*Math.min(3,Math.max(1,D.ex.length))+40);
+ if(!D.ex.length){F(26);T('لا توجد امتحانات خلال هذه الفترة',W-M,y+22,MUT);y+=60}
+ else table([{h:'تاريخ الامتحان',w:.5,ltr:1},{h:'الدرجة',w:.5,ltr:1,b:1}],D.ex.map(e=>[fdn(e.d),e.sc+'/'+e.max]));
+  const closing=(txt)=>{F(28,600);const mw=W-2*M-150,ln=[];(Array.isArray(txt)?txt:[txt]).forEach(sg=>{let cu='';sg.split(' ').forEach(w=>{const t=cu?cu+' '+w:w;if(x.measureText(t).width>mw&&cu){ln.push(cu);cu=w}else cu=t});ln.push(cu)});
+  if(y+100+ln.length*50>H-130){newPage();F(28,600)}
+  y+=34;x.fillStyle=GOLD;x.fillRect(W/2-250,y,214,2);x.fillRect(W/2+36,y,214,2);x.save();x.translate(W/2,y+1);x.rotate(Math.PI/4);x.fillRect(-7,-7,14,14);x.restore();y+=66;
+  ln.forEach(l=>{F(28,600);T(l,W/2,y,NAVY,'center');y+=50})};
+ closing('نشكركم على ثقتكم الغالية، ومعًا نمضي بأبنائنا نحو التميّز.');
+ flush();return pdfBuild(jp)}
+function data(v,from,to){
+ const D={name:v.name,from,to,p:0,l:0,a:0,ab:[],hd:0,hp:0,hm:0,ex:[]};
+ (v.sessions||[]).forEach(x=>{if(x.date<from||x.date>to)return;if(x.status==='absent'){D.a++;D.ab.push(x.date)}else if(x.status==='late'){D.l++}else D.p++});
+ D.ab.sort();
+ (v.homework||[]).forEach(h=>{if(h.date<from||h.date>to)return;if(h.status==='done')D.hd++;else if(h.status==='partial')D.hp++;else D.hm++});
+ (v.grades||[]).forEach(g=>{if(g.date&&g.date>=from&&g.date<=to)D.ex.push({d:g.date,sc:g.score,max:g.max})});
+ D.ex.sort((a,b)=>a.d.localeCompare(b.d));D.att=D.p+D.l;return D}
+function months(v){const s={};[...(v.sessions||[]),...(v.grades||[]),...(v.homework||[])].forEach(x=>{if(x.date)s[x.date.slice(0,7)]=1});const n=new Date();s[n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')]=1;return Object.keys(s).sort().reverse()}
+function range(ym){const a=ym.split('-'),last=new Date(+a[0],+a[1],0).getDate();return [ym+'-01',ym+'-'+String(last).padStart(2,'0')]}
+async function make(v,ym){const r=range(ym);return sprMake(data(v,r[0],r[1]))}
+window.ParentReport={make,months,data};
 })();
 </script><script>(function(){
   const $=s=>document.querySelector(s);
@@ -245,10 +340,32 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
     if(sh.next&&s.next){
       const d=dm(s.next.date);
       out+=card(I.clock,'الحصة القادمة','',`<div class="nx"><div class="big"><b>${d.d}</b><span>${d.m}</span></div><div><p>${esc(s.next.topic)}</p><small>${d.w}، ${AR(esc(s.next.time))}</small></div></div>`)}
-    out+=`<div class="ft"><b>Apex Center</b><br>هذه الصفحة للقراءة فقط. لأي استفسار تواصل مع المدرس.</div></div>`;
+    if(window.ParentReport&&(s.sessions.length||s.grades.length||s.homework.length)){const ms=ParentReport.months(s);
+      out+=card(I.book,'تقرير الشهر PDF','',`<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select id="rpm" style="flex:1;min-width:120px;padding:10px;border-radius:10px;border:1px solid #e3e7f1;font:inherit">${ms.map(m=>{const a=m.split('-');return `<option value="${m}">${MONTHS[+a[1]-1]} ${AR(a[0])}</option>`}).join('')}</select><button id="rpb" type="button" style="padding:10px 16px;border-radius:10px;border:0;background:#14204a;color:#fff;font:inherit;font-weight:700">📄 تحميل التقرير</button></div><div id="rpmsg" style="font-size:12px;color:#6b7280;margin-top:6px"></div>`)}
+    out+=`<div class="card np" id="pushc"><h3><i>${I.shield}</i>تنبيهات ابنك</h3><div id="pushb"></div></div>`;
+    out+=`<div class="ft">هذه الصفحة للقراءة فقط. لأي استفسار تواصل مع المدرس.</div></div>`;
     app.innerHTML=out;
+    pushUI();
+    if($('#rpb'))$('#rpb').onclick=async()=>{const m=$('#rpmsg'),b=$('#rpb');b.disabled=true;m.textContent='⏳ جاري تجهيز التقرير...';try{const ym=$('#rpm').value,blob=await ParentReport.make(s,ym),fn='تقرير-'+ym+'.pdf',f=new File([blob],fn,{type:'application/pdf'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})&&isIos){try{await navigator.share({files:[f]});m.textContent='✅ تم';b.disabled=false;return}catch(e){}}
+      const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=fn;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),60000);m.textContent='✅ تم تنزيل التقرير'}catch(e){m.textContent='❌ تعذّر تجهيز التقرير، جرّب تاني'}b.disabled=false};
     $('#lo').onclick=async()=>{if(confirm('هتخرج من الجهاز ده وهتكتب الاسم والرقم تاني عشان تدخل. متأكد؟')){await ParentAPI.logout();loginView()}};
   }
+  const isIos=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+  const standalone=()=>matchMedia('(display-mode: standalone)').matches||!!navigator.standalone;
+  const pushSupported=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+  async function curSub(){try{const r=await navigator.serviceWorker.getRegistration('./');return r?await r.pushManager.getSubscription():null}catch(e){return null}}
+  async function pushUI(){const b=$('#pushb');if(!b)return;
+    if(!pushSupported()||(isIos&&!standalone())){b.innerHTML=`<p class="sub">${isIos?'عشان توصلك تنبيهات على الآيفون: دوس زرار المشاركة ثم "إضافة إلى الشاشة الرئيسية"، وافتح الصفحة من الأيقونة، وبعدين فعّل التنبيهات من هنا.':'المتصفح ده مش بيدعم التنبيهات. جرّب Chrome على الأندرويد.'}</p>`;return}
+    if(Notification.permission==='denied'){b.innerHTML='<p class="sub">التنبيهات متقفلة من إعدادات المتصفح. افتحها من هناك وجرّب تاني.</p>';return}
+    const s=await curSub();
+    if(s&&Notification.permission==='granted'){b.innerHTML='<p class="sub">✅ التنبيهات شغالة. هيجيلك إشعار أول ما المدرس يسجل حضور أو غياب أو تأخير أو واجب أو درجة لابنك.</p><button class="btn" id="po" style="background:#8a8fb0">إيقاف التنبيهات</button>';$('#po').onclick=async()=>{await ParentAPI.pushOff(s.endpoint);try{await s.unsubscribe()}catch(e){}pushUI()};return}
+    b.innerHTML='<p class="sub">فعّل التنبيهات عشان يوصلك إشعار فوري لما المدرس يسجل حضور ابنك أو غيابه أو تأخيره أو الواجب أو درجة اختبار.</p><button class="btn" id="pn">🔔 فعّل التنبيهات</button><div id="pm" class="sub"></div>';
+    $('#pn').onclick=async()=>{const m=$('#pm');try{m.textContent='جاري التفعيل...';const perm=await Notification.requestPermission();if(perm!=='granted'){m.textContent='لازم توافق على الإذن.';return}
+      const reg=await navigator.serviceWorker.register('sw.js?srv='+encodeURIComponent(ParentAPI.srv?ParentAPI.srv():''));await navigator.serviceWorker.ready;const key=await ParentAPI.pushKey();if(!key){m.textContent='السيرفر مش جاهز للتنبيهات دلوقتي.';return}
+      let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)});
+      const r=await ParentAPI.pushSub(sub.endpoint);if(!r.ok){m.textContent='معرفتش أفعّلها. جرّب تاني.';return}pushUI()}catch(e){m.textContent='معرفتش أفعّلها: '+(e&&e.message||e)}}}
+  function u8(b){const p='='.repeat((4-b.length%4)%4),s=(b+p).replace(/-/g,'+').replace(/_/g,'/'),r=atob(s),o=new Uint8Array(r.length);for(let i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o}
   function loginView(state){
     state=state||{};
     app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:14px"></div>

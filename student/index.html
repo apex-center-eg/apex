@@ -388,7 +388,7 @@ window.ParentReport={make,months,data};
       let r;try{r=await ParentAPI.login(n,p)}catch(x){r={ok:false}}
       if(r.ok&&r.student){childView(r.student);return}
       go.disabled=false;go.innerHTML='دخول '+I.arrow;
-      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>محاولات كتير غلط. استنى حوالي 15 دقيقة وجرّب تاني، أو كلم المدرس.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>مش لاقيين بيانات مطابقة. اتأكد إن الاسم ثلاثي زي ما هو في المركز، وإن الرقم هو اللي سجلته عند المدرس. لو لسه مش راضي يفتح كلم المدرس.</div></div>`;
+      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>محاولات كتير غلط. استنى حوالي 15 دقيقة وجرّب تاني، أو كلم المدرس.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>مش لاقيين بيانات مطابقة. اتأكد إن الاسم ثلاثي زي ما هو في المركز، وإن الرقم هو رقم ولي أمرك المسجل عند المدرس. لو لسه مش راضي يفتح كلم المدرس.</div></div>`;
     });
   }
   async function boot(){

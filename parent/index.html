@@ -146,6 +146,7 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
   }
   window.ParentAPI={isFake:false,
     hasDevice:()=>!!tok(),
+    async login(name,phone){const j=await call('/login',{name,phone});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
     async request(name,phone){const j=await call('/request-access',{name,phone});return j.ok?{ok:true}:j},
     async claim(code){const j=await call('/claim-code',{code});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
     async open(){const t=tok();if(!t)return {ok:false,locked:false};const j=await call('/view',{token:t});if(j.ok)return {ok:true,student:j.student};if(j.status===401)setTok('');return j},
@@ -177,7 +178,7 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
   if(window.ParentAPI&&ParentAPI.isFake)$('#demo').classList.add('on');
   let lockTimer=null;
   function mmss(s){return AR(String(Math.floor(s/60)).padStart(2,'0'))+':'+AR(String(s%60).padStart(2,'0'))}
-  function loginView(state){
+  function codeView(state){
     state=state||{};
     app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:14px"></div>
     <div class="emb"><i></i>${I.cap}</div>
@@ -246,38 +247,37 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
       out+=card(I.clock,'الحصة القادمة','',`<div class="nx"><div class="big"><b>${d.d}</b><span>${d.m}</span></div><div><p>${esc(s.next.topic)}</p><small>${d.w}، ${AR(esc(s.next.time))}</small></div></div>`)}
     out+=`<div class="ft"><b>Apex Center</b><br>هذه الصفحة للقراءة فقط. لأي استفسار تواصل مع المدرس.</div></div>`;
     app.innerHTML=out;
-    $('#lo').onclick=async()=>{if(confirm('هتخرج من الجهاز ده وهتحتاج كود جديد من المدرس عشان تدخل تاني. متأكد؟')){await ParentAPI.logout();loginView()}};
+    $('#lo').onclick=async()=>{if(confirm('هتخرج من الجهاز ده وهتكتب الاسم والرقم تاني عشان تدخل. متأكد؟')){await ParentAPI.logout();loginView()}};
   }
-  function requestView(state){
+  function loginView(state){
     state=state||{};
     app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:14px"></div>
     <div class="emb"><i></i>${I.cap}</div>
-    <div class="brand"><h1 style="font-weight:400;font-size:27px;line-height:1.5">طلب كود الدخول<br><span style="color:var(--gold2)">لمتابعة ابنك</span></h1></div>
+    <div class="brand"><h1 style="font-weight:400;font-size:27px;line-height:1.5">متابعة ابنك<br><span style="color:var(--gold2)">بسهولة</span></h1></div>
     <div class="orn"><span></span>${I.dia}<span></span></div>
     <form class="box" id="rf" autocomplete="off" novalidate><h2>أهلاً بحضرتك</h2>
-    <div class="sub">اكتب اسم الطالب ورقم موبايلك المسجل في المركز.<br>لو البيانات مطابقة هيوصلك كود على واتساب من المدرس.</div>
+    <div class="sub">اكتب اسم ابنك ورقم موبايلك المسجل في المركز وهتشوف متابعته على طول.</div>
     <div class="fld"><label for="nm">اسم الطالب ثلاثي</label><div class="inp">${I.user}<input id="nm" type="text" placeholder="الاسم الثلاثي كما في كشف المركز" autocomplete="off" autocapitalize="off" spellcheck="false"></div></div>
     <div class="fld"><label for="ph">رقم موبايل ولي الأمر</label><div class="inp">${I.phone}<input id="ph" type="tel" inputmode="tel" dir="ltr" style="text-align:right" placeholder="رقم موبايلك المسجل" autocomplete="off"></div></div>
     <div id="msg"></div>
-    <button class="btn" id="go" type="submit">اطلب الكود ${I.arrow}</button>
-    <div class="priv" style="margin-top:12px"><a href="#" id="bk" style="color:var(--gold2);text-decoration:underline">عندي كود</a></div></form>
-    <div class="priv">${I.shield}<span>الكود بيتبعت على واتساب لرقم ولي الأمر المسجل في المركز بس</span></div></div>`;
-    $('#bk').onclick=e=>{e.preventDefault();loginView()};
+    <button class="btn" id="go" type="submit">دخول ${I.arrow}</button>
+    </form>
+    <div class="priv">${I.shield}<span>بياناتك محمية. مفيش أرقام بتظهر لأي حد</span></div></div>`;
+    
     const f=$('#rf'),msg=$('#msg'),go=$('#go');
     f.addEventListener('submit',async e=>{
       e.preventDefault();if(go.disabled)return;
       const n=$('#nm').value,p=$('#ph').value.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
       if(n.trim().length<3||p.replace(/\D/g,'').length<10){msg.innerHTML=`<div class="msg er" role="alert">${I.alert}<div>اكتب الاسم ورقم الموبايل كاملين.</div></div>`;return}
       go.disabled=true;go.innerHTML='<span class="spin"></span>';msg.innerHTML='';
-      let r;try{r=await ParentAPI.request(n,p)}catch(x){r={ok:false}}
-      if(r.ok){app.innerHTML=`<div class="lg"><div class="glow"></div><div style="height:30px"></div><div class="emb"><i></i>${I.cap}</div><div class="box"><h2>تم استلام طلبك</h2><div class="sub" style="line-height:2">لو البيانات مطابقة لسجل المركز،<br>هيوصلك كود على واتساب من المدرس في أقرب وقت.<br><br>أول ما يوصلك اللينك افتحه على موبايلك.</div></div><div class="priv">${I.shield}<span>الكود بيتبعت لرقم ولي الأمر المسجل في المركز بس</span></div></div>`;return}
-      go.disabled=false;go.innerHTML='اطلب الكود '+I.arrow;
-      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>تم إيقاف المحاولات مؤقتاً. جرّب بعد قليل.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>تعذّر إرسال الطلب. تأكد من الإنترنت وحاول تاني.</div></div>`;
+      let r;try{r=await ParentAPI.login(n,p)}catch(x){r={ok:false}}
+      if(r.ok&&r.student){childView(r.student);return}
+      go.disabled=false;go.innerHTML='دخول '+I.arrow;
+      msg.innerHTML=r.locked?`<div class="msg lk" role="alert">${I.lock}<div>محاولات كتير غلط. استنى شوية وجرّب تاني.</div></div>`:`<div class="msg er" role="alert">${I.alert}<div>الاسم أو الرقم مش مطابقين لسجل المركز. اكتب الاسم ثلاثي زي ما هو في المركز والرقم المسجل. لو لسه مش راضي يفتح كلم المدرس.</div></div>`;
     });
   }
   async function boot(){
-    if(location.hash==='#request'&&!(ParentAPI.hasDevice&&ParentAPI.hasDevice())){requestView();return}
-    const m=/^#c=([A-Za-z0-9-]{8,40})$/.exec(location.hash||'');
+        const m=/^#c=([A-Za-z0-9-]{8,40})$/.exec(location.hash||'');
     if(m){history.replaceState(null,'',location.pathname+location.search);
       app.innerHTML='<div class="lg"><div style="height:120px"></div><div class="brand"><h1 style="font-weight:400;font-size:22px">جاري التحقق...</h1></div></div>';
       const r=await ParentAPI.claim(m[1]);if(r.ok){childView(r.student);return}

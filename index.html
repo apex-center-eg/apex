@@ -2912,7 +2912,7 @@ function viewOf(s){const st=startDate(),ok=d=>!st||!d||d>=st,gr=(db.groups||[]).
  const best=grades.reduce((a,g)=>!a||(g.max?g.score/g.max:0)>(a.max?a.score/a.max:0)?g:a,null);
  return {name:s.name,grade:'',group:gr?gr.name:'',summary:{attendancePct:sessions.length?Math.round(pres/sessions.length*100):null,avg,hwDone:homework.filter(h=>h.status==='done').length,hwTotal:homework.length,level:avg==null?'':lvl(avg),best:best?Math.round(best.max?best.score/best.max*100:best.score):null,bestTest:best?best.test:''},sessions,grades,homework,notes,next:null}}
 function payload(){const all=(db.students||[]).filter(s=>s.id&&s.name);
- const students=all.map(s=>({id:s.id,view:viewOf(s)}));
+ const students=all.map(s=>({id:s.id,phone:s.gphone||'',view:viewOf(s)}));
  const t={students:students.length,sessions:0,grades:0,homework:0,notes:0};students.forEach(x=>{t.sessions+=x.view.sessions.length;t.grades+=x.view.grades.length;t.homework+=x.view.homework.length;t.notes+=x.view.notes.length});
  return{students,t,skipped:0}}
 const cnt=()=>{const st=db.students||[];let g=0,n=0;st.forEach(s=>{g+=(s.grades||[]).length;n+=(s.nlog||[]).length});return{st:st.length,se:(db.sessions||[]).length,g,n,fl:st.reduce((a,s)=>a+(s.nlog||[]).filter(x=>x.fl).length,0)}};
@@ -2928,8 +2928,12 @@ function gpWarn(gp,own,selfId){const w=[],g=nph(gp);if(!validPh(gp))w.push('رق
  const me=(db.students||[]).filter(s=>s.id!==selfId&&g&&nph(s.phone)===g);if(me.length)w.push('الرقم ده هو رقم الطالب نفسه عند: '+me.slice(0,3).map(s=>s.name).join('، '));return w}
 window.gpWarn=gpWarn;window.pBadge=function(s){const ok=pconf()[s.id]&&pconf()[s.id]===s.gphone,w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/إخوات/.test(x));
  return (ok?'<span class=tag style="background:#16a34a;color:#fff">✅ رقم ولي الأمر متأكد</span>':'<span class=tag style="background:#d97706;color:#fff">⏳ رقم ولي الأمر لسه ما اتأكدش</span>')+(w.length?' <span class=tag style="background:#e5484d;color:#fff" title="'+esc(w.join(' | '))+'">🚨 راجع الرقم</span>':'')};
+const groupLink=()=>(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/#request';
+function pending(){const st=pstat();return (db.students||[]).filter(s=>st[s.id]&&st[s.id].req>0&&st[s.id].active!==0&&!(window.__sentNow||{})[s.id]).sort((a,b)=>st[a.id].req-st[b.id].req).map(s=>({id:s.id,name:s.name}))}
+window.parentGroupCopy=async function(){try{await navigator.clipboard.writeText(groupLink());msg('✅ اتنسخ لينك الجروب')}catch(e){msg(groupLink())}};
+window.parentSendNext=function(){const ps=pending();if(!ps.length)return msg('مفيش طلبات');window.__sentNow=window.__sentNow||{};window.__sentNow[ps[0].id]=1;parentSendCode(ps[0].id)};
 function gpAudit(){const out=[];(db.students||[]).forEach(s=>{const w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/طبيعي لو إخوات/.test(x));if(w.length)out.push({s,w})});return out}
-async function pRefresh(silent){if(!key()||!srv())return;try{const r=await api('/admin/status','GET');if(!r.j.ok)return silent||msg('❌ تعذّر تحديث الحالة');const st={},cf=pconf(),cd=pcodes();r.j.students.forEach(x=>{st[x.id]=x;const s=(db.students||[]).find(y=>y.id===x.id);if(s&&x.devices>0&&cd[x.id]&&cd[x.id].ph===s.gphone)cf[x.id]=s.gphone;if(x.devices===0&&!x.code&&cf[x.id]&&!cd[x.id])delete cf[x.id]});LS('pstat',JSON.stringify(st));LS('pconf',JSON.stringify(cf));LS('pstat_t',String(Date.now()));if(page==='tools')render();silent||msg('✅ اتحدثت الحالة')}catch(e){silent||msg('❌ مفيش اتصال بالسيرفر')}}
+async function pRefresh(silent){if(!key()||!srv())return;try{const r=await api('/admin/status','GET');if(!r.j.ok)return silent||msg('❌ تعذّر تحديث الحالة');const st={},cf=pconf(),cd=pcodes();r.j.students.forEach(x=>{st[x.id]=x;const s=(db.students||[]).find(y=>y.id===x.id);if(s&&x.devices>0&&cd[x.id]&&cd[x.id].ph===s.gphone)cf[x.id]=s.gphone;if(x.devices===0&&!x.code&&cf[x.id]&&!cd[x.id])delete cf[x.id]});window.__sentNow={};LS('pstat',JSON.stringify(st));LS('pconf',JSON.stringify(cf));LS('pstat_t',String(Date.now()));if(page==='tools')render();silent||msg('✅ اتحدثت الحالة')}catch(e){silent||msg('❌ مفيش اتصال بالسيرفر')}}
 window.parentRefresh=()=>pRefresh(false);
 function genCode(){const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',b=crypto.getRandomValues(new Uint8Array(10));return [...b].map(x=>A[x%32]).join('')}
 window.parentSendCode=async function(id){const s=(db.students||[]).find(x=>x.id===id);if(!s)return;if(!validPh(s.gphone))return alert('رقم ولي الأمر مش صحيح. صلّحه الأول من ملف الطالب.');
@@ -2953,6 +2957,9 @@ window.parentCard=function(){if(key()&&srv()&&Date.now()-(+LS('pstat_t')||0)>600
 <input id=psrv placeholder="عنوان السيرفر" value="${esc(sv)}" onchange="parentSrv(this.value)" style="direction:ltr">
 <div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button></div>
 <p class=mut id=parmsg>${sv?'':'⏸️ الرفع متوقف لحد ما السيرفر يتفعّل. مفيش حاجة بتتبعت دلوقتي.'}</p>
+<h4 style="margin:14px 0 6px">📩 طلبات أولياء الأمور</h4>
+<p class=mut>لينك الجروب: <span dir=ltr>${esc(groupLink())}</span></p><button class=g onclick="parentGroupCopy()">🔗 نسخ لينك الجروب</button>
+${(()=>{const ps=pending();return ps.length?'<p class=mut>'+ps.length+' طلب مستني كود:</p>'+ps.slice(0,40).map(x=>`<div class=row style="margin-bottom:6px"><span style=flex:1>📩 طلب من ولي أمر <b>${esc(x.name)}</b></span><button onclick="parentSendCode('${x.id}')" ${k&&sv?'':'disabled'}>📲 إرسال كود</button></div>`).join('')+(ps.length>1?'<button class=s style="width:100%;margin-top:6px" onclick="parentSendNext()">📲 إرسال للتالي ('+ps.length+' متبقي)</button><p class=mut>الواتساب بيتفتح لكل واحد، وإنت بتضغط إرسال. الكود بيروح لرقم ولي الأمر المسجل مش لرقم الطلب.</p>':''):'<p class=mut>مفيش طلبات جديدة</p>'})()}
 <h4 style="margin:14px 0 6px">🔍 مراجعة أرقام أولياء الأمور</h4>
 ${(()=>{const a=gpAudit();return a.length?'<p class=mut>'+a.length+' طالب رقمهم محتاج مراجعة:</p>'+a.slice(0,15).map(x=>'<p class=mut style="margin:4px 0">🚨 <b>'+esc(x.s.name)+'</b>: '+esc(x.w.join(' / '))+'</p>').join(''):'<p class=mut>✅ مفيش أرقام مشكوك فيها</p>'})()}
 <h4 style="margin:14px 0 6px">👨‍👩‍👦 تأكيد أولياء الأمور</h4>
@@ -2966,7 +2973,7 @@ window.parentBackupCopy=async function(){try{if(!window.__bkStr)await parentBack
 window.parentRange=v=>{LS('prange',String(+v));msg('اتحفظت المدة. هتتطبق في الرفع الجاي.')};
 window.parentSrv=v=>{LS('psrv',v.trim());render()};
 window.parentLink=async function(){const u=(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';try{await navigator.clipboard.writeText(u);msg('✅ اتنسخ: '+u)}catch(e){msg(u)}};
-window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ رفع بيانات أولياء الأمور</h3><p>هيترفع: ${p.t.students} طالب، ${p.t.sessions} حصة، ${p.t.grades} درجة، ${p.t.homework} واجب، ${p.t.notes} ملاحظة.<br>المدة: ${r?'آخر '+r+' شهور':'السنة كلها'}.${p.skipped?'<br>⚠️ '+p.skipped+' طالب من غير رقم ولي أمر صالح مش هيترفعوا.':''}</p><p class=mut>الملاحظات المحتاجة متابعة وأرقام التليفونات مش بتتبعت. خدت نسخة احتياطية تلقائية قبل الرفع.</p><div class=row><button onclick="parentSync()">متابعة</button><button class=g onclick=closeM()>إلغاء</button></div>`)};
+window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ رفع بيانات أولياء الأمور</h3><p>هيترفع: ${p.t.students} طالب، ${p.t.sessions} حصة، ${p.t.grades} درجة، ${p.t.homework} واجب، ${p.t.notes} ملاحظة.<br>المدة: ${r?'آخر '+r+' شهور':'السنة كلها'}.${p.skipped?'<br>⚠️ '+p.skipped+' طالب من غير رقم ولي أمر صالح مش هيترفعوا.':''}</p><p class=mut>الملاحظات المحتاجة متابعة مش بتتبعت. أرقام أولياء الأمور بتتبعت مشفّرة (هاش) للمطابقة بس، ومش بتتخزن واضحة على السيرفر. خدت نسخة احتياطية تلقائية قبل الرفع.</p><div class=row><button onclick="parentSync()">متابعة</button><button class=g onclick=closeM()>إلغاء</button></div>`)};
 window.parentSync=async function(){closeM();try{snap('قبل رفع بيانات أولياء الأمور')}catch(e){}const p=payload();msg('⏳ جاري الرفع...');
  try{const r=await api('/admin/sync','POST',{students:p.students,replace:true});if(!r.j.ok)return msg('❌ فشل الرفع'+(r.status===401?' (الجهاز مش متفعّل أو مقفول مؤقتاً)':''));
   const c=r.j,bad=['students','sessions','grades','homework','notes'].filter(k=>c[k]!==p.t[k]);

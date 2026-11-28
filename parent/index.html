@@ -149,7 +149,7 @@ if(/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){var q=new URLSearchPara
     hasDevice:()=>!!tok(),
     async login(name,phone){const j=await call('/login',{name,phone});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
     async pushKey(){try{const r=await fetch(SRV+'/vapid');const j=await r.json();return j.key||''}catch(e){return ''}},
-    async pushSub(endpoint){const j=await call('/push-sub',{token:tok(),endpoint});return {ok:!!j.ok}},
+    async pushSub(endpoint,keys){const j=await call('/push-sub',{token:tok(),endpoint,keys:keys||undefined});return {ok:!!j.ok}},
     async pushOff(endpoint){await call('/push-off',{endpoint})},
     async request(name,phone){const j=await call('/request-access',{name,phone});return j.ok?{ok:true}:j},
     async claim(code){const j=await call('/claim-code',{code});if(j.ok&&j.token){setTok(j.token);return {ok:true,student:j.student}}return j},
@@ -354,17 +354,18 @@ window.ParentReport={make,months,data};
   const isIos=/iphone|ipad|ipod/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
   const standalone=()=>matchMedia('(display-mode: standalone)').matches||!!navigator.standalone;
   const pushSupported=()=>'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
+  const keysOf=s=>{try{const j=s.toJSON();return {p256dh:j.keys.p256dh,auth:j.keys.auth}}catch(e){return null}};
   async function curSub(){try{const r=await navigator.serviceWorker.getRegistration('./');return r?await r.pushManager.getSubscription():null}catch(e){return null}}
   async function pushUI(){const b=$('#pushb');if(!b)return;
     if(!pushSupported()||(isIos&&!standalone())){b.innerHTML=`<p class="sub">${isIos?'عشان توصلك تنبيهات على الآيفون: دوس زرار المشاركة ثم "إضافة إلى الشاشة الرئيسية"، وافتح الصفحة من الأيقونة، وبعدين فعّل التنبيهات من هنا.':'المتصفح ده مش بيدعم التنبيهات. جرّب Chrome على الأندرويد.'}</p>`;return}
     if(Notification.permission==='denied'){b.innerHTML='<p class="sub">التنبيهات متقفلة من إعدادات المتصفح. افتحها من هناك وجرّب تاني.</p>';return}
     const s=await curSub();
-    if(s&&Notification.permission==='granted'){b.innerHTML='<p class="sub">✅ التنبيهات شغالة. هيجيلك إشعار أول ما المدرس يسجل حضور أو غياب أو تأخير أو واجب أو درجة لابنك.</p><button class="btn" id="po" style="background:#8a8fb0">إيقاف التنبيهات</button>';$('#po').onclick=async()=>{await ParentAPI.pushOff(s.endpoint);try{await s.unsubscribe()}catch(e){}pushUI()};return}
+    if(s&&Notification.permission==='granted'){try{ParentAPI.pushSub(s.endpoint,keysOf(s))}catch(e){}b.innerHTML='<p class="sub">✅ التنبيهات شغالة. هيجيلك إشعار أول ما المدرس يسجل حضور أو غياب أو تأخير أو واجب أو درجة لابنك.</p><button class="btn" id="po" style="background:#8a8fb0">إيقاف التنبيهات</button>';$('#po').onclick=async()=>{await ParentAPI.pushOff(s.endpoint);try{await s.unsubscribe()}catch(e){}pushUI()};return}
     b.innerHTML='<p class="sub">فعّل التنبيهات عشان يوصلك إشعار فوري لما المدرس يسجل حضور ابنك أو غيابه أو تأخيره أو الواجب أو درجة اختبار.</p><button class="btn" id="pn">🔔 فعّل التنبيهات</button><div id="pm" class="sub"></div>';
     $('#pn').onclick=async()=>{const m=$('#pm');try{m.textContent='جاري التفعيل...';const perm=await Notification.requestPermission();if(perm!=='granted'){m.textContent='لازم توافق على الإذن.';return}
       const reg=await navigator.serviceWorker.register('sw.js?srv='+encodeURIComponent(ParentAPI.srv?ParentAPI.srv():''));await navigator.serviceWorker.ready;const key=await ParentAPI.pushKey();if(!key){m.textContent='السيرفر مش جاهز للتنبيهات دلوقتي.';return}
       let sub=await reg.pushManager.getSubscription();if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(key)});
-      const r=await ParentAPI.pushSub(sub.endpoint);if(!r.ok){m.textContent='معرفتش أفعّلها. جرّب تاني.';return}pushUI()}catch(e){m.textContent='معرفتش أفعّلها: '+(e&&e.message||e)}}}
+      const r=await ParentAPI.pushSub(sub.endpoint,keysOf(sub));if(!r.ok){m.textContent='معرفتش أفعّلها. جرّب تاني.';return}pushUI()}catch(e){m.textContent='معرفتش أفعّلها: '+(e&&e.message||e)}}}
   function u8(b){const p='='.repeat((4-b.length%4)%4),s=(b+p).replace(/-/g,'+').replace(/_/g,'/'),r=atob(s),o=new Uint8Array(r.length);for(let i=0;i<r.length;i++)o[i]=r.charCodeAt(i);return o}
   function loginView(state){
     state=state||{};

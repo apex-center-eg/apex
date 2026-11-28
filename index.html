@@ -1677,7 +1677,7 @@ function wipeS(id){
  for(const k in DR){const a=DR[k];['rec','tm','sc'].forEach(f=>{if(a[f])delete a[f][id]})}
  if(Array.isArray(db.fu))db.fu=db.fu.filter(x=>x.sid!==id);
  ['nf','nfv'].forEach(n=>{const o=db[n];if(o&&typeof o==='object'&&!Array.isArray(o))Object.keys(o).forEach(k=>{if(k.includes(id))delete o[k]})});
- db.students=db.students.filter(s=>s.id!==id)}
+ db.students=db.students.filter(s=>s.id!==id);try{window.pDelQ&&window.pDelQ(id)}catch(e){}}
 window.delAsk=function(t,id){const g=t==='g',o=g?db.groups.find(x=>x.id===id):S(id);if(!o)return;
  const n=g?db.students.filter(s=>s.gid===id).length:0,ses=g?Object.keys(db.att).filter(k=>k.startsWith(id+'|')).length:0;
  openM(`<h3 style="color:var(--red)">🗑️ حذف نهائي</h3><p><b>${esc(o.name)}</b></p><p>${g?`هتتمسح المجموعة و<b>${n}</b> طالب فيها وكل حصصها (<b>${ses}</b>)`:'هيتمسح الطالب'} بكل بياناته: الحضور والغياب والدرجات والملاحظات وسجل المتابعة. <b>الحذف نهائي ومش بيترجع.</b></p><label style="display:flex;gap:8px;align-items:center;margin:12px 0;color:var(--tx);font-size:14px"><input type=checkbox id=dzk style="width:auto;margin:0" onchange="$('#dzb').disabled=!this.checked"> أنا متأكد إني عايز أحذف نهائيًا</label><div class=row><button class=d id=dzb disabled onclick="delDo('${t}','${id}')">🗑️ احذف نهائيًا</button><button class=g onclick=closeM()>إلغاء</button></div>`)};
@@ -2911,9 +2911,10 @@ function viewOf(s){const st=startDate(),ok=d=>!st||!d||d>=st,gr=(db.groups||[]).
  const pres=sessions.filter(x=>x.status!=='absent').length,avg=grades.length?Math.round(grades.reduce((a,g)=>a+(g.max?g.score/g.max*100:g.score),0)/grades.length*10)/10:null;
  const best=grades.reduce((a,g)=>!a||(g.max?g.score/g.max:0)>(a.max?a.score/a.max:0)?g:a,null);
  return {name:s.name,grade:'',group:gr?gr.name:'',summary:{attendancePct:sessions.length?Math.round(pres/sessions.length*100):null,avg,hwDone:homework.filter(h=>h.status==='done').length,hwTotal:homework.length,level:avg==null?'':lvl(avg),best:best?Math.round(best.max?best.score/best.max*100:best.score):null,bestTest:best?best.test:''},sessions,grades,homework,notes,next:null}}
+const archOf=s=>!!(s.arch||(((db.groups||[]).find(g=>g.id===s.gid))||{}).arch);
 const schOf=s=>{const g=(db.groups||[]).find(x=>x.id===s.gid);if(!g)return [];const t=gStart(g),d=gDays(g);if(t==null||!d.length)return [];const e=g.e24&&/^\d{1,2}:\d{2}$/.test(g.e24)?tmin(g.e24):0;return [{d,t,e:e>t?e:0}]};
 function payload(){const all=(db.students||[]).filter(s=>s.id&&s.name);
- const students=all.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,sch:schOf(s),view:viewOf(s)}));
+ const students=all.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,arch:archOf(s)?1:0,sch:schOf(s),view:viewOf(s)}));
  const t={students:students.length,sessions:0,grades:0,homework:0,notes:0};students.forEach(x=>{t.sessions+=x.view.sessions.length;t.grades+=x.view.grades.length;t.homework+=x.view.homework.length;t.notes+=x.view.notes.length});
  return{students,t,skipped:0}}
 const cnt=()=>{const st=db.students||[];let g=0,n=0;st.forEach(s=>{g+=(s.grades||[]).length;n+=(s.nlog||[]).length});return{st:st.length,se:(db.sessions||[]).length,g,n,fl:st.reduce((a,s)=>a+(s.nlog||[]).filter(x=>x.fl).length,0)}};
@@ -2938,16 +2939,21 @@ function pending(){const st=pstat();return (db.students||[]).filter(s=>st[s.id]&
 window.parentCallCopy=async function(){const n=(db.students||[]).filter(notViewable);const t=n.map(x=>x.name+' - '+(x.gphone||'بدون رقم')).join('\n');try{await navigator.clipboard.writeText(t);msg('✅ اتنسخت قايمة '+n.length+' طالب')}catch(e){msg('❌ النسخ مش مسموح هنا')}};
 const pvs=()=>{try{return JSON.parse(LS('pviews')||'{}')}catch(e){return{}}};
 const hsh=x=>{let h=5381;for(let i=0;i<x.length;i++)h=((h<<5)+h+x.charCodeAt(i))|0;return h};
-const stuSig=s=>hsh(JSON.stringify(viewOf(s))+'|'+(s.gphone||'')+'|'+(notViewable(s)?1:0)+'|'+(s.name||'')+'|'+JSON.stringify(schOf(s)));
+const stuSig=s=>hsh(JSON.stringify(viewOf(s))+'|'+(s.gphone||'')+'|'+(notViewable(s)?1:0)+'|'+(s.name||'')+'|'+JSON.stringify(schOf(s))+'|'+(archOf(s)?1:0));
 const pvAll=()=>{const o={};(db.students||[]).filter(s=>s.id&&s.name).forEach(s=>o[s.id]=stuSig(s));return o};
 window.__pa=window.__pa||{t:null,busy:false,last:db._t};
 async function parentAuto(){const pa=window.__pa;if(pa.busy||!key()||!srv()||!LS('plast')||navigator.onLine===false)return;
  const old=pvs();const ch=(db.students||[]).filter(s=>s.id&&s.name&&old[s.id]!==stuSig(s));if(!ch.length)return;pa.busy=true;
- try{const r=await api('/admin/sync','POST',{students:ch.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,sch:schOf(s),view:viewOf(s)})),replace:false});
+ try{const r=await api('/admin/sync','POST',{students:ch.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,arch:archOf(s)?1:0,sch:schOf(s),view:viewOf(s)})),replace:false});
   if(r.j&&r.j.ok){const o=pvs();ch.forEach(s=>o[s.id]=stuSig(s));LS('pviews',JSON.stringify(o));LS('plast',String(Date.now()));LS('psig',psig());LS('pauto',JSON.stringify({t:Date.now(),n:ch.length,pushed:r.j.pushed||0,notified:r.j.notified||0}))}}catch(e){}
  pa.busy=false}
 window.parentAuto=parentAuto;
-if(!window.__paOn){window.__paOn=1;setInterval(()=>{const pa=window.__pa;if(db._t!==pa.last){pa.last=db._t;clearTimeout(pa.t);pa.t=setTimeout(parentAuto,2500)}},1000);setInterval(parentAuto,60000);addEventListener('online',()=>setTimeout(parentAuto,1500));document.addEventListener('visibilitychange',()=>{if(!document.hidden)parentAuto()})}
+const pdq=()=>{try{return JSON.parse(LS('pdel')||'[]')}catch(e){return[]}};
+window.pDelQ=id=>{const q=pdq();if(!q.includes(id)){q.push(id);LS('pdel',JSON.stringify(q))}setTimeout(flushDel,300)};
+async function flushDel(){const q=pdq();if(!q.length||!key()||!srv()||navigator.onLine===false||window.__fd)return;window.__fd=1;
+ try{const ids=q.slice(0,40),r=await api('/admin/remove','POST',{ids});if(r.j&&r.j.ok){const o=pvs();ids.forEach(i=>delete o[i]);LS('pviews',JSON.stringify(o));LS('pdel',JSON.stringify(pdq().filter(x=>!ids.includes(x))));if(pdq().length)setTimeout(flushDel,300)}}catch(e){}window.__fd=0}
+window.flushDel=flushDel;
+if(!window.__paOn){window.__paOn=1;setInterval(()=>{const pa=window.__pa;if(db._t!==pa.last){pa.last=db._t;clearTimeout(pa.t);pa.t=setTimeout(parentAuto,2500)}},1000);setInterval(parentAuto,60000);setInterval(flushDel,60000);addEventListener('online',()=>{setTimeout(parentAuto,1500);setTimeout(flushDel,1800)});document.addEventListener('visibilitychange',()=>{if(!document.hidden)parentAuto()})}
 window.parentGroupCopy=async function(){try{await navigator.clipboard.writeText(groupLink());msg('✅ اتنسخ لينك الجروب')}catch(e){msg(groupLink())}};
 window.parentAnnounce=async function(){const t=(document.getElementById('annt')||{}).value||'',a=(document.getElementById('anna')||{}).value||'',m=document.getElementById('annmsg');const tx=t.replace(/\s+/g,' ').trim();if(tx.length<2)return m&&(m.textContent='اكتب الإعلان الأول');
  const who=a==='p'?'أولياء الأمور':a==='s'?'الطلاب':'كل أولياء الأمور والطلاب';if(!confirm('هتبعت الإعلان ده لـ'+who+' كإشعار واحد:\n\n'+tx+'\n\nتأكيد؟'))return;

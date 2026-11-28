@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Apex Center</title>
+<title>Ms.Samar</title>
 <meta name="theme-color" content="#10153a">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="application-name" content="Apex Center">
-<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Apex Center">
+<meta name="application-name" content="Ms.Samar">
+<meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Ms.Samar">
 
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f4f5fb;--card:#fff;--tx:#1f2340;--mut:#7a7f9c;--pr:#5b5bd6;--ac:#14b8a6;--bd:#e5e7f2;--red:#e5484d;--grn:#16a34a}
@@ -912,8 +912,8 @@ function rHtml(R){return `<div class=rp-wrap><div class="rp-bar np"><button clas
  <div class=rp-paper><div class=rp-hd><div class=rp-brand>🎓 ${esc(db.cn||'APEX CENTER')}</div>${ctrSub()}<h2>${esc(R.title)}</h2><div class=rp-meta>${R.meta.map(m=>`<span><b>${esc(m[0])}:</b> ${esc(m[1])}</span>`).join('')}</div></div>
  ${R.stats.length?`<div class=rp-stats>${R.stats.map(x=>`<div><b${x[2]?` style="color:${x[2]}"`:''}>${esc(x[1])}</b>${esc(x[0])}</div>`).join('')}</div>`:''}
  ${R.blocks.map(b=>`<h3>${esc(b.h)}</h3>`+(b.head?`<div class=tw><table class=rp-t><tr>${b.head.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${b.rows.length?b.rows.map(r=>`<tr>${r.map(cH).join('')}</tr>`).join(''):`<tr><td colspan=${b.head.length} style="text-align:center;color:#6b7280">لا توجد بيانات</td></tr>`}</table></div>`:'')+(b.note?`<p class=rp-n>${esc(b.note)}</p>`:'')).join('')}
- <div class=rp-ft>تم إنشاء التقرير بتاريخ ${esc(fd(today(),1))} · Apex Center</div></div></div>`}
-function rText(R){let m=`📑 *${R.title}*\n`;R.meta.forEach(x=>m+=`${x[0]}: ${x[1]}\n`);m+='\n';R.stats.forEach(x=>m+=`• ${x[0]}: ${x[1]}\n`);R.blocks.forEach(b=>{m+=`\n*${b.h}*\n`;if(b.head){b.rows.slice(0,25).forEach(r=>m+='- '+r.map(cT).join(' | ')+'\n');if(b.rows.length>25)m+=`... و${b.rows.length-25} صف إضافي (راجع ملف Excel)\n`}if(b.note)m+=b.note+'\n'});return m+'\n🎓 Apex Center'}
+ <div class=rp-ft>تم إنشاء التقرير بتاريخ ${esc(fd(today(),1))} · Ms.Samar</div></div></div>`}
+function rText(R){let m=`📑 *${R.title}*\n`;R.meta.forEach(x=>m+=`${x[0]}: ${x[1]}\n`);m+='\n';R.stats.forEach(x=>m+=`• ${x[0]}: ${x[1]}\n`);R.blocks.forEach(b=>{m+=`\n*${b.h}*\n`;if(b.head){b.rows.slice(0,25).forEach(r=>m+='- '+r.map(cT).join(' | ')+'\n');if(b.rows.length>25)m+=`... و${b.rows.length-25} صف إضافي (راجع ملف Excel)\n`}if(b.note)m+=b.note+'\n'});return m+'\n🎓 Ms.Samar'}
 function rep(){
  const st=rp.g?sts().filter(s=>s.gid===rp.g):sts(),t=rp.t;
  const ui=`<div class=card><h3 class=hd>⚙️ إعدادات التقرير</h3><label>نوع التقرير</label><select onchange="rpType(this.value)">${RT.map(x=>`<option value=${x[0]} ${x[0]===t?'selected':''}>${x[1]}</option>`).join('')}</select>
@@ -1125,7 +1125,7 @@ const subLine=()=>[tn()&&'أ/ '+tn(),sj()&&'مادة '+sj()].filter(Boolean).joi
 window.ctrHdr=function(){const l=[];if(cn())l.push('🏫 *'+cn()+'*');if(subLine())l.push('👨‍🏫 '+subLine());return l.length?l.join('\n')+'\n\n':''};
 window.ctrSub=function(){const s=[tn()&&'المعلم: '+esc(tn()),sj()&&'المادة: '+esc(sj())].filter(Boolean).join(' · ');return s?'<div class=rp-sub>'+s+'</div>':''};
 window.ctrXl=function(){const r=[];if(cn())r.push([{t:'المركز',s:2},cn()]);if(tn())r.push([{t:'المعلم',s:2},tn()]);if(sj())r.push([{t:'المادة',s:2},sj()]);if(r.length)r.push([]);return r};
-window.applyBrand=function(){const h=$('#brand');if(h)h.innerHTML='🎓 '+esc(cn()||'Apex Center')+(subLine()?'<small>'+esc(subLine())+'</small>':'');document.title=cn()?cn()+' · Apex Center':'Apex Center'};
+window.applyBrand=function(){const h=$('#brand');if(h)h.innerHTML='🎓 '+esc(cn()||'Ms.Samar')+(subLine()?'<small>'+esc(subLine())+'</small>':'');document.title=cn()?cn()+' · Ms.Samar':'Ms.Samar'};
 const _tools=window.tools;window.tools=function(){return _tools()};
 const _rText=window.rText;window.rText=function(R){return ctrHdr()+_rText(R)};
 const _pr=window.parentReport;window.parentReport=function(k){return ctrHdr()+_pr(k)};
@@ -1303,7 +1303,7 @@ const PW=1240,PH=1754,PM=64,PF='"IBM Plex Sans Arabic",Tahoma,"Segoe UI",Arial,s
 async function pdfMake(R){
   try{await document.fonts.load('600 22px "IBM Plex Sans Arabic"')}catch(e){}
   if(R.sig){try{await document.fonts.load('68px "Great Vibes"')}catch(e){}}
-  const jp=[];let c,x,y,pg=0;const cName=cn()||'Apex Center';
+  const jp=[];let c,x,y,pg=0;const cName=cn()||'Ms.Samar';
   const F=(sz,w)=>{x.font=(w||400)+' '+sz+'px '+PF};
   const T=(s,xr,yy,col,al)=>{x.fillStyle=col||'#111827';x.textAlign=al||'right';x.fillText(String(s),xr,yy)};
   const rr=(a,b,w,h,r,fill,stroke)=>{x.beginPath();if(x.roundRect)x.roundRect(a,b,w,h,r);else x.rect(a,b,w,h);if(fill){x.fillStyle=fill;x.fill()}if(stroke){x.strokeStyle=stroke;x.lineWidth=1.5;x.stroke()}};
@@ -1320,7 +1320,7 @@ async function pdfMake(R){
   x.fillStyle=GOLD;x.fillRect(PM+24,y+126,PW-2*PM-48,4);
   if(R.sig){x.textAlign='center';x.font='64px "Great Vibes","Segoe Script",cursive';x.fillStyle='#f5e3b2';x.fillText(R.sig,PW/2,y+76);
    const shw=x.measureText(R.sig).width;x.strokeStyle='#e8c27a';x.lineWidth=2.5;x.beginPath();x.moveTo(PW/2-shw/2-16,y+98);x.lineTo(PW/2+shw/2+16,y+98);x.stroke()}
-  if(!R.plain){F(46,700);T(cName,PW-PM-34,y+62,'#fff');F(25);T(sub||'تقرير مُعَدّ بواسطة Apex Center',PW-PM-34,y+104,'#e8c27a');
+  if(!R.plain){F(46,700);T(cName,PW-PM-34,y+62,'#fff');F(25);T(sub||'تقرير مُعَدّ بواسطة Ms.Samar',PW-PM-34,y+104,'#e8c27a');
   F(22,700);T('APEX CENTER',PM+34,y+76,'#e8c27a','left')}y+=128+46;
   F(42,700);wrapT(R.title,PW-2*PM).forEach(l=>{T(l,PW-PM,y+34,INK);y+=62});y+=4;
   /* بيانات التقرير */
@@ -2592,7 +2592,7 @@ function nsSummaryObj(){
  const gl=gs().map(g=>({name:g.name,days:gDays(g).map(d=>DN[d]),start:gStart(g)==null?null:nsH2(gStart(g)),students:sts().filter(s=>s.gid===g.id).length}));
  const cs=nots().filter(n=>!n.done).map(n=>{const s=S(n.sid)||{};return{priority:n.pr===0?'urgent':n.pr===1?'follow-up':'info',type:n.type,student:s.name||'',group:gname(s.gid),why:n.type==='note'?'ملاحظة تحتاج متابعة':n.why}});
  return{app:'apex',kind:'summary',version:1,generated:new Date().toISOString(),date:today(),counts:{students:sts().length,groups:gl.length,open_cases:cs.length,urgent:cs.filter(c=>c.priority==='urgent').length},groups:gl,cases:cs,note:'No phone numbers, no notes text, no grades detail.'}}
-function nsSummaryText(){const o=nsSummaryObj(),L=['📋 ملخص Apex Center — '+o.date,'طلاب: '+o.counts.students+' | حالات مفتوحة: '+o.counts.open_cases+' | عاجل: '+o.counts.urgent,''];
+function nsSummaryText(){const o=nsSummaryObj(),L=['📋 ملخص Ms.Samar — '+o.date,'طلاب: '+o.counts.students+' | حالات مفتوحة: '+o.counts.open_cases+' | عاجل: '+o.counts.urgent,''];
  o.cases.slice(0,40).forEach(c=>L.push((c.priority==='urgent'?'🔴 ':'🟠 ')+c.student+' ('+c.group+'): '+c.why));return L.join('\n')}
 window.nsSumDl=function(){const s=JSON.stringify(nsSummaryObj(),null,1),a=document.createElement('a');a.href=URL.createObjectURL(new Blob([s],{type:'application/json'}));a.download='apex-summary-'+today()+'.json';a.click();toast('✓ تم تصدير الملخص (من غير أرقام تليفونات)')};
 window.nsSumCopy=async function(){const t=nsSummaryText();try{await navigator.clipboard.writeText(t);toast('✓ اتنسخ الملخص')}catch(e){prompt('انسخ الملخص:',t)}};
@@ -2958,7 +2958,7 @@ window.parentSendCode=async function(id){const s=(db.students||[]).find(x=>x.id=
  const code=genCode();try{const r=await api('/admin/code','POST',{id,code});if(!r.j.ok||!r.j.changed)return msg('❌ الطالب مش مرفوع على السيرفر (اعمل رفع الأول)');
   const cd=pcodes();cd[id]={ph:s.gphone,t:Date.now()};LS('pcodes',JSON.stringify(cd));
   const base=(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';
-  openWa(s.gphone,'السلام عليكم، ده لينك صفحة متابعة '+s.name+' على Apex Center:\n'+base+'#c='+code+'\nافتحه من موبايلك مرة واحدة بس، وبعدها الصفحة هتفتح لوحدها على موبايلك. من فضلك متبعتهوش لأي حد، وهو صالح 14 يوم.');
+  openWa(s.gphone,'السلام عليكم، ده لينك صفحة متابعة '+s.name+' على Ms.Samar:\n'+base+'#c='+code+'\nافتحه من موبايلك مرة واحدة بس، وبعدها الصفحة هتفتح لوحدها على موبايلك. من فضلك متبعتهوش لأي حد، وهو صالح 14 يوم.');
   setTimeout(()=>pRefresh(true),1500)}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.parentReset=async function(id){if(!confirm('هتتمسح كل الأجهزة المربوطة بالطالب ده، وهتحتاج تبعت كود جديد. متأكد؟'))return;try{const r=await api('/admin/reset','POST',{id});if(r.j.ok){const cf=pconf();delete cf[id];LS('pconf',JSON.stringify(cf));pRefresh(true);msg('✅ اتمسحت الأجهزة. ابعت كود جديد.')}}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 function msg(t){const m=document.getElementById('parmsg');if(m)m.textContent=t}

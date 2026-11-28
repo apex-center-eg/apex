@@ -2919,6 +2919,8 @@ const cnt=()=>{const st=db.students||[];let g=0,n=0;st.forEach(s=>{g+=(s.grades|
 const key=()=>LS('pkey');
 async function api(path,method,body){const r=await fetch(srv()+path,{method,headers:{'content-type':'application/json',authorization:'Bearer '+key()},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({}));return{status:r.status,j}}
 
+const psig=()=>{const c=cnt();return [c.st,c.se,c.g,c.n,(db.students||[]).map(s=>(s.name||'')+(s.gphone||'')).join('').length,JSON.stringify(pver())].join('|')};
+const agoTxt=t=>{const m=Math.round((Date.now()-t)/60000);return m<1?'دلوقتي':m<60?'من '+m+' دقيقة':m<1440?'من '+Math.round(m/60)+' ساعة':'من '+Math.round(m/1440)+' يوم'};
 const pver=()=>{try{return JSON.parse(LS('pver')||'{}')}catch(e){return{}}};const isVer=s=>pver()[s.id]&&pver()[s.id]===s.gphone;const notViewable=s=>!validPh(s.gphone)||(!isVer(s)&&gpWarn(s.gphone,s.phone,s.id).filter(x=>!/إخوات/.test(x)).length>0);
 const pcodes=()=>{try{return JSON.parse(LS('pcodes')||'{}')}catch(e){return{}}},pconf=()=>{try{return JSON.parse(LS('pconf')||'{}')}catch(e){return{}}},pstat=()=>{try{return JSON.parse(LS('pstat')||'{}')}catch(e){return{}}};
 const nph=x=>{let d=String(x||'').replace(/[٠-٩]/g,c=>'٠١٢٣٤٥٦٧٨٩'.indexOf(c)).replace(/[۰-۹]/g,c=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(c)).replace(/\D/g,'');if(d.startsWith('0020'))d=d.slice(4);else if(d.startsWith('20')&&d.length>=12)d=d.slice(2);if(d.length===10&&d[0]==='1')d='0'+d;return d};
@@ -2932,6 +2934,7 @@ window.gpWarn=gpWarn;window.pBadge=function(s){const ok=(pconf()[s.id]&&pconf()[
  return (ok?'<span class=tag style="background:#16a34a;color:#fff">✅ رقم ولي الأمر متأكد</span>':'<span class=tag style="background:#d97706;color:#fff">⏳ رقم ولي الأمر لسه ما اتأكدش</span>')+(w.length?' <span class=tag style="background:#e5484d;color:#fff" title="'+esc(w.join(' | '))+'">🚨 راجع الرقم</span>':'')};
 const groupLink=()=>(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';
 function pending(){const st=pstat();return (db.students||[]).filter(s=>st[s.id]&&st[s.id].req>0&&st[s.id].active!==0&&!(window.__sentNow||{})[s.id]).sort((a,b)=>st[a.id].req-st[b.id].req).map(s=>({id:s.id,name:s.name}))}
+window.parentCallCopy=async function(){const n=(db.students||[]).filter(notViewable);const t=n.map(x=>x.name+' - '+(x.gphone||'بدون رقم')).join('\n');try{await navigator.clipboard.writeText(t);msg('✅ اتنسخت قايمة '+n.length+' طالب')}catch(e){msg('❌ النسخ مش مسموح هنا')}};
 window.parentGroupCopy=async function(){try{await navigator.clipboard.writeText(groupLink());msg('✅ اتنسخ لينك الجروب')}catch(e){msg(groupLink())}};
 window.parentSendNext=function(){const ps=pending();if(!ps.length)return msg('مفيش طلبات');window.__sentNow=window.__sentNow||{};window.__sentNow[ps[0].id]=1;parentSendCode(ps[0].id)};
 function gpAudit(){const out=[];(db.students||[]).forEach(s=>{const w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/طبيعي لو إخوات/.test(x));if(w.length)out.push({s,w})});return out}
@@ -2959,9 +2962,11 @@ window.parentCard=function(){if(key()&&srv()&&Date.now()-(+LS('pstat_t')||0)>600
 <input id=psrv placeholder="عنوان السيرفر" value="${esc(sv)}" onchange="parentSrv(this.value)" style="direction:ltr">
 <div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button></div>
 <p class=mut id=parmsg>${sv?'':'⏸️ الرفع متوقف لحد ما السيرفر يتفعّل. مفيش حاجة بتتبعت دلوقتي.'}</p>
+${(()=>{const t=+LS('plast')||0;if(!t)return '<p class=mut style="color:#d97706">⏳ لسه ما رفعتش بيانات لأولياء الأمور.</p>';const ch=LS('psig')!==psig();return '<p class=mut>🕒 آخر رفع: '+agoTxt(t)+'</p>'+(ch?'<p class=mut style="color:#d97706">🔔 فيه تغييرات من آخر رفع (حصص أو درجات أو ملاحظات). دوس "حدّث بيانات أولياء الأمور" عشان تظهر لهم.</p>':'<p class=mut>✅ الكل متحدّث</p>')})()}
 <h4 style="margin:14px 0 6px">🔗 لينك جروب أولياء الأمور</h4>
 <p class=mut>ولي الأمر يفتح اللينك ويكتب اسم ابنه ورقم موبايله ويشوف المتابعة. مفيش أكواد.</p>${(()=>{const n=(db.students||[]).filter(notViewable);return n.length?'<p class=mut style="color:#e5484d">⏸️ '+n.length+' طالب مخفيين عن أولياء الأمور لحد ما تراجع الرقم وتدوس "تم التأكد من الرقم ✅" (من القائمة تحت).</p>':''})()}<p class=mut dir=ltr>${esc(groupLink())}</p><button class=g onclick="parentGroupCopy()">🔗 نسخ لينك الجروب</button>
 <h4 style="margin:14px 0 6px">🔍 مراجعة أرقام أولياء الأمور</h4>
+${(()=>{const n=(db.students||[]).filter(notViewable);return n.length?'<div class=row style="margin-bottom:6px"><button class=g onclick="parentCallCopy()">📋 نسخ قائمة الطلاب اللي محتاجين اتصال ('+n.length+')</button></div>'+n.slice(0,60).map(x=>'<div class=row style="margin-bottom:4px"><span style=flex:1>'+esc(x.name)+'<br><small class=mut dir=ltr>'+esc(x.gphone||'بدون رقم')+'</small></span>'+(validPh(x.gphone)?'<a class=ctb href="tel:'+esc(x.gphone)+'">📞 اتصال</a>':'')+'<button class=g onclick="pVerify(\''+x.id+'\')">✅ تم التأكد</button></div>').join(''):''})()}
 ${(()=>{const a=gpAudit();return a.length?'<p class=mut>'+a.length+' طالب رقمهم محتاج مراجعة:</p>'+a.slice(0,15).map(x=>'<p class=mut style="margin:4px 0">🚨 <b>'+esc(x.s.name)+'</b>: '+esc(x.w.join(' / '))+'</p>').join(''):'<p class=mut>✅ مفيش أرقام مشكوك فيها</p>'})()}
 <h4 style="margin:14px 0 6px">👨‍👩‍👦 أرقام أولياء الأمور</h4>
 <div class=row style="margin-bottom:6px"><span style=flex:1 class=mut>بعد ما تكلم ولي الأمر وتتأكد من الرقم دوس "تم التأكد ✅" (بيتحدث تلقائياً).</span></div>
@@ -2978,7 +2983,7 @@ window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ �
 window.parentSync=async function(){closeM();try{snap('قبل رفع بيانات أولياء الأمور')}catch(e){}const p=payload();msg('⏳ جاري الرفع...');
  try{const r=await api('/admin/sync','POST',{students:p.students,replace:true});if(!r.j.ok)return msg('❌ فشل الرفع'+(r.status===401?' (الجهاز مش متفعّل أو مقفول مؤقتاً)':''));
   const c=r.j,bad=['students','sessions','grades','homework','notes'].filter(k=>c[k]!==p.t[k]);
-  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة'+(c.students>c.eligible?' | ⏸️ '+(c.students-c.eligible)+' طالب مخفيين عن أولياء الأمور لحد ما تأكد أرقامهم':''))}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
+  msg(bad.length?'⚠️ الأعداد مش متطابقة في: '+bad.join('، ')+' (أرسلنا '+p.t.students+' طالب، السيرفر '+c.students+')':'✅ اترفع وتأكدنا: '+c.students+' طالب، '+c.sessions+' حصة، '+c.grades+' درجة، '+c.homework+' واجب، '+c.notes+' ملاحظة'+(c.students>c.eligible?' | ⏸️ '+(c.students-c.eligible)+' طالب مخفيين عن أولياء الأمور لحد ما تأكد أرقامهم':''));if(!bad.length){LS('plast',String(Date.now()));LS('psig',psig())}if(page==='tools'){const m=($('#parmsg')||{}).innerHTML;render();const e=$('#parmsg');if(e&&m)e.innerHTML=m}}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.parentRevoke=async function(id){const rv=rev(),to=!!rv[id];try{const r=await api('/admin/revoke','POST',{id,active:to});if(r.j.ok&&r.j.changed){if(to)delete rv[id];else rv[id]=1;LS('prev',JSON.stringify(rv));render()}else msg('❌ الطالب مش مرفوع على السيرفر (اعمل رفع الأول)')}catch(e){msg('❌ مفيش اتصال بالسيرفر')}};
 window.__parentPayload=payload;
 /* تفعيل الجهاز: لينك لمرة واحدة */

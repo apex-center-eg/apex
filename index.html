@@ -1389,7 +1389,7 @@ function gDays(g){
  if(Array.isArray(g.days))return g.days.slice();
  const t=String(g.time||'').replace(/[\u0640\u064B-\u0652]/g,'');
  const r=[];DP.forEach(([n,re])=>{if(re.test(t))r.push(n)});return r}
-const mmT=m=>f12(m2t(m));
+window.gDays=gDays;const mmT=m=>f12(m2t(m));
 function gSpan(g){const s=gStart(g);if(s==null)return '';
  const e=g.e24&&/^\d{1,2}:\d{2}$/.test(g.e24)?tmin(g.e24):null;
  return mmT(s)+(e!=null&&e>s?' – '+mmT(e):'')}
@@ -1802,7 +1802,7 @@ window.att=function(){
  const pctD=st.length?Math.round(mk/st.length*100):0;
  const qs=`<div class=qs><div class=qg><div class=q-p><b>${cnt('p')}</b>حاضر</div><div class=q-l><b>${cnt('l')}</b>متأخر</div><div class=q-a><b>${cnt('a')}</b>غايب</div><div class=q-u><b>${left}</b>لسه</div></div><div class=qb><span><b>${mk}</b> / ${st.length} تم تسجيلهم</span><div class=bar><i style="width:${pctD}%"></i></div></div></div>`;
  const pl=st.filter(s=>rr.rec[s.id]==='p'||rr.rec[s.id]==='l'),hc=c=>pl.filter(s=>H[s.id]===c).length,hu=pl.filter(s=>!H[s.id]).length;
- const hwc=`<div class=card style="padding:12px 16px!important;border-radius:18px"><div class=row><b style=flex:1>📚 تسليم الواجب</b><button class=g style="padding:7px 12px;font-size:13px" onclick="hwAll()">✔ تسليم الكل</button></div><div class=mut style="margin-top6px;margin-top:6px">✔ ${hc('d')} تم · ◐ ${hc('m')} ناقص · ✖ ${hc('n')} لم يُسلّم · ${hu} لسه</div></div>`;
+ const hwc=`<div class=card style="padding:12px 16px!important;border-radius:18px"><div class=row><b style=flex:1>📚 تسليم الواجب</b><button class=g style="padding:7px 12px;font-size:13px" onclick="hwAll()">✔ تسليم الكل</button></div><div class=mut style="margin-top:6px;margin-top:6px">✔ ${hc('d')} تم · ◐ ${hc('m')} ناقص · ✖ ${hc('n')} لم يُسلّم · ${hu} لسه</div></div>`;
  const exam=`<details class=card style="padding:12px 18px!important;border-radius:18px" ${rr.ex.max?'open':''}><summary style="cursor:pointer;font-weight:700">📝 امتحان النهاردة (اختياري)</summary><div class=fg style="margin-top:8px"><div><label>الدرجة النهائية</label><input type=number inputmode=decimal value="${esc(rr.ex.max)}" onchange="exSet('max',this.value)"></div></div>${mx?'':'<div class=mut>اكتب الدرجة النهائية لتظهر خانة الدرجة لكل طالب.</div>'}</details>`;
  const cards=st.map((s,i)=>{const c=rr.rec[s.id],w=alerts(s),tmv=rr.tm[s.id],pr=c==='p'||c==='l',cls=c==='p'?'is-p':c==='l'?'is-l':c==='a'?'is-a':'';
   let sub='';if(c==='l'){const d=tmv&&s0!=null?tmin(tmv)-s0:0;sub=tmv?'وصل '+f12(tmv)+(d>0?' · اتأخر '+dur(d):''):'متأخر — حدد وقت الوصول'}else if(c==='p'&&tmv)sub='وصل '+f12(tmv);
@@ -2911,8 +2911,9 @@ function viewOf(s){const st=startDate(),ok=d=>!st||!d||d>=st,gr=(db.groups||[]).
  const pres=sessions.filter(x=>x.status!=='absent').length,avg=grades.length?Math.round(grades.reduce((a,g)=>a+(g.max?g.score/g.max*100:g.score),0)/grades.length*10)/10:null;
  const best=grades.reduce((a,g)=>!a||(g.max?g.score/g.max:0)>(a.max?a.score/a.max:0)?g:a,null);
  return {name:s.name,grade:'',group:gr?gr.name:'',summary:{attendancePct:sessions.length?Math.round(pres/sessions.length*100):null,avg,hwDone:homework.filter(h=>h.status==='done').length,hwTotal:homework.length,level:avg==null?'':lvl(avg),best:best?Math.round(best.max?best.score/best.max*100:best.score):null,bestTest:best?best.test:''},sessions,grades,homework,notes,next:null}}
+const schOf=s=>{const g=(db.groups||[]).find(x=>x.id===s.gid);if(!g)return [];const t=gStart(g),d=gDays(g);if(t==null||!d.length)return [];const e=g.e24&&/^\d{1,2}:\d{2}$/.test(g.e24)?tmin(g.e24):0;return [{d,t,e:e>t?e:0}]};
 function payload(){const all=(db.students||[]).filter(s=>s.id&&s.name);
- const students=all.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,view:viewOf(s)}));
+ const students=all.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,sch:schOf(s),view:viewOf(s)}));
  const t={students:students.length,sessions:0,grades:0,homework:0,notes:0};students.forEach(x=>{t.sessions+=x.view.sessions.length;t.grades+=x.view.grades.length;t.homework+=x.view.homework.length;t.notes+=x.view.notes.length});
  return{students,t,skipped:0}}
 const cnt=()=>{const st=db.students||[];let g=0,n=0;st.forEach(s=>{g+=(s.grades||[]).length;n+=(s.nlog||[]).length});return{st:st.length,se:(db.sessions||[]).length,g,n,fl:st.reduce((a,s)=>a+(s.nlog||[]).filter(x=>x.fl).length,0)}};
@@ -2937,17 +2938,21 @@ function pending(){const st=pstat();return (db.students||[]).filter(s=>st[s.id]&
 window.parentCallCopy=async function(){const n=(db.students||[]).filter(notViewable);const t=n.map(x=>x.name+' - '+(x.gphone||'بدون رقم')).join('\n');try{await navigator.clipboard.writeText(t);msg('✅ اتنسخت قايمة '+n.length+' طالب')}catch(e){msg('❌ النسخ مش مسموح هنا')}};
 const pvs=()=>{try{return JSON.parse(LS('pviews')||'{}')}catch(e){return{}}};
 const hsh=x=>{let h=5381;for(let i=0;i<x.length;i++)h=((h<<5)+h+x.charCodeAt(i))|0;return h};
-const stuSig=s=>hsh(JSON.stringify(viewOf(s))+'|'+(s.gphone||'')+'|'+(notViewable(s)?1:0)+'|'+(s.name||''));
+const stuSig=s=>hsh(JSON.stringify(viewOf(s))+'|'+(s.gphone||'')+'|'+(notViewable(s)?1:0)+'|'+(s.name||'')+'|'+JSON.stringify(schOf(s)));
 const pvAll=()=>{const o={};(db.students||[]).filter(s=>s.id&&s.name).forEach(s=>o[s.id]=stuSig(s));return o};
 window.__pa=window.__pa||{t:null,busy:false,last:db._t};
 async function parentAuto(){const pa=window.__pa;if(pa.busy||!key()||!srv()||!LS('plast')||navigator.onLine===false)return;
  const old=pvs();const ch=(db.students||[]).filter(s=>s.id&&s.name&&old[s.id]!==stuSig(s));if(!ch.length)return;pa.busy=true;
- try{const r=await api('/admin/sync','POST',{students:ch.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,view:viewOf(s)})),replace:false});
+ try{const r=await api('/admin/sync','POST',{students:ch.map(s=>({id:s.id,phone:s.gphone||'',hold:notViewable(s)?1:0,sch:schOf(s),view:viewOf(s)})),replace:false});
   if(r.j&&r.j.ok){const o=pvs();ch.forEach(s=>o[s.id]=stuSig(s));LS('pviews',JSON.stringify(o));LS('plast',String(Date.now()));LS('psig',psig());LS('pauto',JSON.stringify({t:Date.now(),n:ch.length,pushed:r.j.pushed||0,notified:r.j.notified||0}))}}catch(e){}
  pa.busy=false}
 window.parentAuto=parentAuto;
 if(!window.__paOn){window.__paOn=1;setInterval(()=>{const pa=window.__pa;if(db._t!==pa.last){pa.last=db._t;clearTimeout(pa.t);pa.t=setTimeout(parentAuto,2500)}},1000);setInterval(parentAuto,60000);addEventListener('online',()=>setTimeout(parentAuto,1500));document.addEventListener('visibilitychange',()=>{if(!document.hidden)parentAuto()})}
 window.parentGroupCopy=async function(){try{await navigator.clipboard.writeText(groupLink());msg('✅ اتنسخ لينك الجروب')}catch(e){msg(groupLink())}};
+window.parentAnnounce=async function(){const t=(document.getElementById('annt')||{}).value||'',a=(document.getElementById('anna')||{}).value||'',m=document.getElementById('annmsg');const tx=t.replace(/\s+/g,' ').trim();if(tx.length<2)return m&&(m.textContent='اكتب الإعلان الأول');
+ const who=a==='p'?'أولياء الأمور':a==='s'?'الطلاب':'كل أولياء الأمور والطلاب';if(!confirm('هتبعت الإعلان ده لـ'+who+' كإشعار واحد:\n\n'+tx+'\n\nتأكيد؟'))return;
+ m.textContent='⏳ جاري الإرسال...';let off=0,sent=0,n=0;try{for(let i=0;i<40;i++){const r=await api('/admin/announce','POST',{text:tx,aud:a,offset:off});if(!r.j.ok){m.textContent='❌ فشل الإرسال'+(r.status===401?' (الجهاز مش متفعّل)':'');return}sent+=r.j.sent;n+=r.j.n;if(r.j.next<0)break;off=r.j.next}
+  m.textContent='✅ اتبعت لـ'+sent+' جهاز'+(n>sent?' ('+(n-sent)+' ما وصلش)':'');document.getElementById('annt').value=''}catch(e){m.textContent='❌ مفيش اتصال بالسيرفر'}};
 window.parentSendNext=function(){const ps=pending();if(!ps.length)return msg('مفيش طلبات');window.__sentNow=window.__sentNow||{};window.__sentNow[ps[0].id]=1;parentSendCode(ps[0].id)};
 function gpAudit(){const out=[];(db.students||[]).forEach(s=>{const w=gpWarn(s.gphone,s.phone,s.id).filter(x=>!/طبيعي لو إخوات/.test(x));if(w.length)out.push({s,w})});return out}
 async function pRefresh(silent){if(!key()||!srv())return;try{const r=await api('/admin/status','GET');if(!r.j.ok)return silent||msg('❌ تعذّر تحديث الحالة');const st={},cf=pconf(),cd=pcodes();r.j.students.forEach(x=>{st[x.id]=x;const s=(db.students||[]).find(y=>y.id===x.id);if(s&&x.devices>0&&cd[x.id]&&cd[x.id].ph===s.gphone)cf[x.id]=s.gphone;if(x.devices===0&&!x.code&&cf[x.id]&&!cd[x.id])delete cf[x.id]});window.__sentNow={};LS('pstat',JSON.stringify(st));LS('pconf',JSON.stringify(cf));LS('pstat_t',String(Date.now()));if(page==='tools')render();silent||msg('✅ اتحدثت الحالة')}catch(e){silent||msg('❌ مفيش اتصال بالسيرفر')}}
@@ -2970,9 +2975,14 @@ window.parentCard=function(){if(key()&&srv()&&Date.now()-(+LS('pstat_t')||0)>600
 <div class=row><button class=g onclick="parentBackup()">⬇️ نسخة احتياطية كاملة (ملف)</button><button class=g onclick="parentBackupCopy()">📋 نسخ النسخة</button></div>
 <h4 style="margin:14px 0 6px">⏳ المدة اللي ولي الأمر يشوفها</h4>
 <select id=prng onchange="parentRange(this.value)"><option value=0 ${rm==0?'selected':''}>السنة كلها</option><option value=1 ${rm==1?'selected':''}>آخر شهر</option><option value=3 ${rm==3?'selected':''}>آخر 3 شهور</option><option value=6 ${rm==6?'selected':''}>آخر 6 شهور</option></select>
+<h4 style="margin:14px 0 6px">📢 إعلان لأولياء الأمور والطلاب</h4>
+<p class=mut>${(()=>{const st=pstat(),ids=(db.students||[]).filter(x=>!notViewable(x)).map(x=>x.id),n=ids.filter(i=>st[i]&&st[i].seen).length;return '👁 '+n+' من '+ids.length+' فتحوا صفحة المتابعة (حسب آخر تحديث للحالة)'})()}</p>
+<textarea id=annt maxlength=160 rows=2 placeholder="اكتب الإعلان (لحد 160 حرف)، مثلاً: مفيش حصة بكرة" style="width:100%;box-sizing:border-box"></textarea>
+<div class=row style="margin-top:6px"><select id=anna><option value="">الكل (أولياء الأمور والطلاب)</option><option value=p>أولياء الأمور بس</option><option value=s>الطلاب بس</option></select><button onclick="parentAnnounce()" ${k&&sv?'':'disabled'}>📢 ابعت الإعلان</button></div>
+<p class=mut id=annmsg></p>
 <h4 style="margin:14px 0 6px">🔄 الرفع</h4>
 <input id=psrv placeholder="عنوان السيرفر" value="${esc(sv)}" onchange="parentSrv(this.value)" style="direction:ltr">
-<div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button></div>
+<div class=row style="margin-top:8px"><button onclick="parentSyncAsk()" ${k&&sv?'':'disabled'}>⬆️ حدّث بيانات أولياء الأمور</button><button class=g onclick="parentLink()" ${sv?'':'disabled'}>🔗 نسخ لينك ولي الأمر</button><button class=g onclick="parentLink('student')" ${sv?'':'disabled'}>🎓 نسخ لينك الطلاب</button></div>
 <p class=mut id=parmsg>${sv?'':'⏸️ الرفع متوقف لحد ما السيرفر يتفعّل. مفيش حاجة بتتبعت دلوقتي.'}</p>
 ${(()=>{const t=+LS('plast')||0;if(!t)return '<p class=mut style="color:#d97706">⏳ لسه ما رفعتش بيانات لأولياء الأمور.</p>';const ch=LS('psig')!==psig();return '<p class=mut>🕒 آخر رفع: '+agoTxt(t)+'</p><p class=mut>⚡ بعد الرفع الأول، أي حضور أو غياب أو تأخير أو واجب أو درجة بتسجلها بتروح لولي الأمر لوحدها في ثواني (من غير ما تدوس رفع). لو مفيش نت بتتبعت أول ما النت يرجع.</p>'+(ch?'<p class=mut style="color:#d97706">🔔 فيه تغييرات من آخر رفع (حصص أو درجات أو ملاحظات). دوس "حدّث بيانات أولياء الأمور" عشان تظهر لهم.</p>':'<p class=mut>✅ الكل متحدّث</p>')})()}
 <h4 style="margin:14px 0 6px">🔗 لينك جروب أولياء الأمور</h4>
@@ -2982,7 +2992,7 @@ ${(()=>{const n=(db.students||[]).filter(notViewable);return n.length?'<div clas
 ${(()=>{const a=gpAudit();return a.length?'<p class=mut>'+a.length+' طالب رقمهم محتاج مراجعة:</p>'+a.slice(0,15).map(x=>'<p class=mut style="margin:4px 0">🚨 <b>'+esc(x.s.name)+'</b>: '+esc(x.w.join(' / '))+'</p>').join(''):'<p class=mut>✅ مفيش أرقام مشكوك فيها</p>'})()}
 <h4 style="margin:14px 0 6px">👨‍👩‍👦 أرقام أولياء الأمور</h4>
 <div class=row style="margin-bottom:6px"><span style=flex:1 class=mut>بعد ما تكلم ولي الأمر وتتأكد من الرقم دوس "تم التأكد ✅" (بيتحدث تلقائياً).</span></div>
-${(db.students||[]).slice(0,400).map(s=>`<div class=row style="margin-bottom:8px;flex-wrap:wrap"><span style=flex:1>${esc(s.name)}<br>${pBadge(s)}<br><small class=mut>${notViewable(s)?'⛔ مش هيظهر لولي الأمر لحد ما تصحح الرقم وتدوس تم التأكد':''}${rv[s.id]?' · ⛔ موقوف':''}</small></span><button class=g onclick="pVerify('${s.id}')">${pver()[s.id]&&pver()[s.id]===s.gphone?'↩️ إلغاء التأكيد':'✅ تم التأكد من الرقم'}</button><button class=g onclick="parentRevoke('${s.id}')" ${k&&sv?'':'disabled'}>${rv[s.id]?'✅ تفعيل':'⛔ إيقاف'}</button></div>`).join('')||'<p class=mut>لا يوجد طلاب</p>'}</div>`};
+${(db.students||[]).slice(0,400).map(s=>`<div class=row style="margin-bottom:8px;flex-wrap:wrap"><span style=flex:1>${esc(s.name)}<br>${pBadge(s)}<br><small class=mut>${notViewable(s)?'⛔ مش هيظهر لولي الأمر لحد ما تصحح الرقم وتدوس تم التأكد':''}${rv[s.id]?' · ⛔ موقوف':''}${(()=>{const x=pstat()[s.id];return x&&x.seen?' · 👁 فتح الصفحة '+agoTxt(x.seen*1000):(x&&x.devices>0?' · 👁 لسه ما فتحش':'')})()}</small></span><button class=g onclick="pVerify('${s.id}')">${pver()[s.id]&&pver()[s.id]===s.gphone?'↩️ إلغاء التأكيد':'✅ تم التأكد من الرقم'}</button><button class=g onclick="parentRevoke('${s.id}')" ${k&&sv?'':'disabled'}>${rv[s.id]?'✅ تفعيل':'⛔ إيقاف'}</button></div>`).join('')||'<p class=mut>لا يوجد طلاب</p>'}</div>`};
 window.parentBackup=async function(){const c=cnt();let str;try{const o=Object.assign({},db,{_meta:{app:'apex',at:Date.now(),n:db.students.length,g:db.groups.length}});str=JSON.stringify(o);JSON.parse(str)}catch(e){return msg('❌ فشل التحقق من النسخة، مفيش ملف اتحفظ')}
  const fn='apex-backup-'+today()+'.json',sum=c.st+' طالب و'+c.se+' حصة و'+c.g+' درجة و'+c.n+' ملاحظة';window.__bkStr=str;
  try{const f=new File([str],fn,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'نسخة Apex'});db._lastExp=Date.now();save();return msg('✅ تم فتح المشاركة: اختار حفظ في Drive أو الملفات أو ابعتها لنفسك. النسخة فيها '+sum)}}catch(e){if(e&&e.name==='AbortError')return msg('اتلغت المشاركة. مفيش ملف اتحفظ.')}
@@ -2990,7 +3000,7 @@ window.parentBackup=async function(){const c=cnt();let str;try{const o=Object.as
 window.parentBackupCopy=async function(){try{if(!window.__bkStr)await parentBackup();await navigator.clipboard.writeText(window.__bkStr);msg('✅ اتنسخت النسخة كاملة. الصقها في ملاحظات أو رسالة لنفسك.')}catch(e){msg('❌ النسخ مش مسموح هنا')}};
 window.parentRange=v=>{LS('prange',String(+v));msg('اتحفظت المدة. هتتطبق في الرفع الجاي.')};
 window.parentSrv=v=>{LS('psrv',v.trim());render()};
-window.parentLink=async function(){const u=(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+'/parent/';try{await navigator.clipboard.writeText(u);msg('✅ اتنسخ: '+u)}catch(e){msg(u)}};
+window.parentLink=async function(w){const u=(location.origin+location.pathname).replace(/index\.html$/,'').replace(/\/$/,'')+(w==='student'?'/student/':'/parent/');try{await navigator.clipboard.writeText(u);msg('✅ اتنسخ: '+u)}catch(e){msg(u)}};
 window.parentSyncAsk=function(){const p=payload(),r=rangeM();openM(`<h3>⬆️ رفع بيانات أولياء الأمور</h3><p>هيترفع: ${p.t.students} طالب، ${p.t.sessions} حصة، ${p.t.grades} درجة، ${p.t.homework} واجب، ${p.t.notes} ملاحظة.<br>المدة: ${r?'آخر '+r+' شهور':'السنة كلها'}.${p.skipped?'<br>⚠️ '+p.skipped+' طالب من غير رقم ولي أمر صالح مش هيترفعوا.':''}</p><p class=mut>الملاحظات المحتاجة متابعة مش بتتبعت. أرقام أولياء الأمور بتتبعت مشفّرة (هاش) للمطابقة بس، ومش بتتخزن واضحة على السيرفر. خدت نسخة احتياطية تلقائية قبل الرفع.</p><div class=row><button onclick="parentSync()">متابعة</button><button class=g onclick=closeM()>إلغاء</button></div>`)};
 window.parentSync=async function(){closeM();try{snap('قبل رفع بيانات أولياء الأمور')}catch(e){}const p=payload();msg('⏳ جاري الرفع...');
  try{const r=await api('/admin/sync','POST',{students:p.students,replace:true});if(!r.j.ok)return msg('❌ فشل الرفع'+(r.status===401?' (الجهاز مش متفعّل أو مقفول مؤقتاً)':''));
